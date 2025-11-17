@@ -106,7 +106,7 @@ dependencies {
 
     // Google Drive API
     implementation("com.google.api-client:google-api-client-android:2.2.0")
-    implementation("com.google.apis:google-api-services-drive:v3-rev20231127-2.0.0")
+    implementation("com.google.apis:google-api-services-drive:v3-rev20220815-2.0.0")
 
     // Firebase
     implementation(platform("com.google.firebase:firebase-bom:32.6.0"))
