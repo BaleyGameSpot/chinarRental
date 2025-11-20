@@ -224,6 +224,7 @@ fun DashboardScreen(
                     )
                 }
             }
+            }
         }
     }
 }
