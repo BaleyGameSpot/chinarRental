@@ -2,6 +2,7 @@ package com.chinarrental.app.data.dao
 
 import androidx.room.*
 import com.chinarrental.app.data.model.Transaction
+import com.chinarrental.app.data.model.TransactionCategory
 import com.chinarrental.app.data.model.TransactionType
 import kotlinx.coroutines.flow.Flow
 
@@ -20,7 +21,7 @@ interface TransactionDao {
     fun getTransactionsByDateRange(startDate: Long, endDate: Long): Flow<List<Transaction>>
 
     @Query("SELECT * FROM transactions WHERE category = :category ORDER BY date DESC")
-    fun getTransactionsByCategory(category: String): Flow<List<Transaction>>
+    fun getTransactionsByCategory(category: TransactionCategory): Flow<List<Transaction>>
 
     @Query("SELECT SUM(amount) FROM transactions WHERE type = :type AND date >= :startDate AND date <= :endDate")
     suspend fun getTotalByTypeAndDateRange(type: TransactionType, startDate: Long, endDate: Long): Double?
@@ -29,7 +30,25 @@ interface TransactionDao {
     suspend fun getTotalIncomeByDateRange(types: List<TransactionType>, startDate: Long, endDate: Long): Double?
 
     @Query("SELECT DISTINCT category FROM transactions WHERE type = :type ORDER BY category ASC")
-    fun getCategoriesByType(type: TransactionType): Flow<List<String>>
+    fun getCategoriesByType(type: TransactionType): Flow<List<TransactionCategory>>
+
+    @Query("SELECT SUM(amount) FROM transactions WHERE type = 'INCOME'")
+    fun getTotalIncome(): Flow<Double>
+
+    @Query("SELECT SUM(amount) FROM transactions WHERE type = 'EXPENSE'")
+    fun getTotalExpense(): Flow<Double>
+
+    @Query("SELECT (SELECT SUM(amount) FROM transactions WHERE type = 'INCOME') - (SELECT SUM(amount) FROM transactions WHERE type = 'EXPENSE')")
+    fun getBalance(): Flow<Double>
+
+    @Query("SELECT * FROM transactions WHERE date >= :todayStart ORDER BY date DESC")
+    fun getTodayTransactions(todayStart: Long = System.currentTimeMillis() / 86400000 * 86400000): Flow<List<Transaction>>
+
+    @Query("SELECT SUM(amount) FROM transactions WHERE type = 'INCOME' AND date >= :todayStart")
+    fun getTodayIncome(todayStart: Long = System.currentTimeMillis() / 86400000 * 86400000): Flow<Double>
+
+    @Query("SELECT SUM(amount) FROM transactions WHERE type = 'EXPENSE' AND date >= :todayStart")
+    fun getTodayExpense(todayStart: Long = System.currentTimeMillis() / 86400000 * 86400000): Flow<Double>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTransaction(transaction: Transaction): Long

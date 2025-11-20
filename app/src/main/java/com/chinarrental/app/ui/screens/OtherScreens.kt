@@ -64,7 +64,7 @@ fun PaymentsScreen(
                     ) {
                         Text("Today's Total", style = MaterialTheme.typography.bodySmall)
                         Text(
-                            "Rs. ${String.format("%.0f", uiState.todayTotal)}",
+                            "Rs. ${String.format(Locale.US, "%.0f", uiState.todayTotal)}",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary
@@ -81,7 +81,7 @@ fun PaymentsScreen(
                     ) {
                         Text("All Time Total", style = MaterialTheme.typography.bodySmall)
                         Text(
-                            "Rs. ${String.format("%.0f", uiState.totalAmount)}",
+                            "Rs. ${String.format(Locale.US, "%.0f", uiState.totalAmount)}",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary
@@ -217,7 +217,7 @@ fun RoznamchaScreen(
                         Column {
                             Text("Total Income", style = MaterialTheme.typography.bodySmall)
                             Text(
-                                "Rs. ${String.format("%.0f", uiState.totalIncome)}",
+                                "Rs. ${String.format(Locale.US, "%.0f", uiState.totalIncome)}",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary
@@ -226,7 +226,7 @@ fun RoznamchaScreen(
                         Column(horizontalAlignment = Alignment.End) {
                             Text("Total Expense", style = MaterialTheme.typography.bodySmall)
                             Text(
-                                "Rs. ${String.format("%.0f", uiState.totalExpense)}",
+                                "Rs. ${String.format(Locale.US, "%.0f", uiState.totalExpense)}",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.error
@@ -242,7 +242,7 @@ fun RoznamchaScreen(
                     ) {
                         Text("Balance", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                         Text(
-                            "Rs. ${String.format("%.0f", uiState.balance)}",
+                            "Rs. ${String.format(Locale.US, "%.0f", uiState.balance)}",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = if (uiState.balance >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error

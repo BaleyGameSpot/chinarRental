@@ -16,7 +16,7 @@ class UserRepository @Inject constructor(
 
     fun getUserById(id: Long): Flow<User?> = userDao.getUserById(id)
 
-    fun getUserByUsername(username: String): Flow<User?> = userDao.getUserByUsername(username)
+    fun getUserByUsername(username: String): Flow<User?> = userDao.getUserByEmailFlow(username)
 
     fun getUsersByRole(role: UserRole): Flow<List<User>> = userDao.getUsersByRole(role)
 
@@ -51,7 +51,7 @@ class UserRepository @Inject constructor(
 
     suspend fun authenticate(username: String, password: String): Result<User> {
         return try {
-            val userFlow = userDao.getUserByUsername(username)
+            val userFlow = userDao.getUserByEmailFlow(username)
             var foundUser: User? = null
 
             // Note: In production, use proper password hashing (BCrypt, etc.)
