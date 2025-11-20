@@ -51,15 +51,20 @@ class UserRepository @Inject constructor(
 
     suspend fun authenticate(username: String, password: String): Result<User> {
         return try {
-            val user = userDao.getUserByUsername(username)
+            val userFlow = userDao.getUserByUsername(username)
+            var foundUser: User? = null
+
             // Note: In production, use proper password hashing (BCrypt, etc.)
             // This is simplified for demonstration
-            user.collect { foundUser ->
-                if (foundUser != null && foundUser.password == password && foundUser.isActive) {
-                    return@collect Result.success(foundUser)
-                }
+            userFlow.collect { user ->
+                foundUser = user
             }
-            Result.failure(Exception("Invalid credentials or inactive user"))
+
+            if (foundUser != null && foundUser!!.password == password && foundUser!!.isActive) {
+                Result.success(foundUser!!)
+            } else {
+                Result.failure(Exception("Invalid credentials or inactive user"))
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
