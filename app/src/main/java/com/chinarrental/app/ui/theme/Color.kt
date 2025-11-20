@@ -10,12 +10,12 @@ val Purple40 = Color(0xFF6650a4)
 val PurpleGrey40 = Color(0xFF625b71)
 val Pink40 = Color(0xFF7D5260)
 
-// Custom colors
-val Primary = Color(0xFF2196F3)
-val PrimaryDark = Color(0xFF1976D2)
-val PrimaryLight = Color(0xFFBBDEFB)
-val Accent = Color(0xFFFF9800)
-val AccentDark = Color(0xFFF57C00)
+// Custom colors - Modern and Eye-catching
+val Primary = Color(0xFF1E88E5)          // Vibrant Blue
+val PrimaryDark = Color(0xFF1565C0)      // Deep Blue
+val PrimaryLight = Color(0xFF90CAF9)     // Light Blue
+val Accent = Color(0xFFFF6F00)           // Vibrant Orange
+val AccentDark = Color(0xFFE65100)       // Deep Orange
 
 val BackgroundLight = Color(0xFFF5F5F5)
 val SurfaceLight = Color(0xFFFFFFFF)
