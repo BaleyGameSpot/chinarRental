@@ -8,7 +8,7 @@ data class Transaction(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val type: TransactionType,
-    val category: String,
+    val category: TransactionCategory,
     val amount: Double,
     val description: String = "",
     val referenceId: Long? = null,
@@ -25,4 +25,17 @@ enum class TransactionType {
     LOAN_RECEIVED,
     ADVANCE_RECEIVED,
     ADVANCE_GIVEN
+}
+
+enum class TransactionCategory {
+    RENTAL_INCOME,
+    MAINTENANCE,
+    UTILITIES,
+    SALARIES,
+    RENT_EXPENSE,
+    SUPPLIES,
+    REPAIRS,
+    MARKETING,
+    OTHER_INCOME,
+    OTHER_EXPENSE
 }
