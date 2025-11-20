@@ -2,6 +2,7 @@ package com.chinarrental.app.data.model
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
 @Entity(
@@ -19,6 +20,10 @@ import androidx.room.PrimaryKey
             childColumns = ["rentalId"],
             onDelete = ForeignKey.SET_NULL
         )
+    ],
+    indices = [
+        Index(value = ["customerId"]),
+        Index(value = ["rentalId"])
     ]
 )
 data class Payment(
