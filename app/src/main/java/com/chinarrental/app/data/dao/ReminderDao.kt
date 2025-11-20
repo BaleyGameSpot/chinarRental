@@ -16,6 +16,15 @@ interface ReminderDao {
     @Query("SELECT * FROM reminders WHERE isCompleted = 0 ORDER BY reminderTime ASC")
     fun getPendingReminders(): Flow<List<Reminder>>
 
+    @Query("SELECT * FROM reminders WHERE isCompleted = 1 ORDER BY reminderTime DESC")
+    fun getCompletedReminders(): Flow<List<Reminder>>
+
+    @Query("SELECT * FROM reminders WHERE reminderTime >= :currentTime AND isCompleted = 0 ORDER BY reminderTime ASC")
+    fun getUpcomingReminders(currentTime: Long = System.currentTimeMillis()): Flow<List<Reminder>>
+
+    @Query("SELECT * FROM reminders WHERE reminderTime < :currentTime AND isCompleted = 0 ORDER BY reminderTime DESC")
+    fun getOverdueReminders(currentTime: Long = System.currentTimeMillis()): Flow<List<Reminder>>
+
     @Query("SELECT * FROM reminders WHERE type = :type ORDER BY reminderTime ASC")
     fun getRemindersByType(type: ReminderType): Flow<List<Reminder>>
 

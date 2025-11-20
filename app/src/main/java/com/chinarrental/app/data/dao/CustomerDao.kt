@@ -21,6 +21,15 @@ interface CustomerDao {
     @Query("SELECT * FROM customers WHERE hasDiscount = 1")
     fun getCustomersWithDiscount(): Flow<List<Customer>>
 
+    @Query("SELECT * FROM customers WHERE cnicNumber LIKE '%' || :cnic || '%'")
+    fun getCustomersByCnic(cnic: String): Flow<List<Customer>>
+
+    @Query("SELECT * FROM customers WHERE id > 0 ORDER BY name ASC")
+    fun getActiveCustomers(): Flow<List<Customer>>
+
+    @Query("SELECT COUNT(*) FROM customers")
+    fun getTotalCustomersCount(): Flow<Int>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertCustomer(customer: Customer): Long
 

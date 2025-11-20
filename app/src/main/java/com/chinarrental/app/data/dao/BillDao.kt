@@ -28,6 +28,12 @@ interface BillDao {
     @Query("SELECT * FROM bills WHERE billDate >= :startDate AND billDate <= :endDate ORDER BY billDate DESC")
     fun getBillsByDateRange(startDate: Long, endDate: Long): Flow<List<Bill>>
 
+    @Query("SELECT SUM(amount) FROM bills")
+    fun getTotalBillsAmount(): Flow<Double>
+
+    @Query("SELECT SUM(amount - paidAmount) FROM bills WHERE status != 'PAID' AND status != 'CANCELLED'")
+    fun getPendingBillsAmount(): Flow<Double>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertBill(bill: Bill): Long
 

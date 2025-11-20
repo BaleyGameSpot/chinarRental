@@ -19,14 +19,26 @@ interface ItemDao {
     @Query("SELECT * FROM items WHERE status = :status ORDER BY name ASC")
     fun getItemsByStatus(status: ItemStatus): Flow<List<Item>>
 
+    @Query("SELECT * FROM items WHERE availableQuantity > 0 ORDER BY name ASC")
+    fun getAvailableItems(): Flow<List<Item>>
+
     @Query("SELECT * FROM items WHERE availableQuantity <= lowStockThreshold")
     fun getLowStockItems(): Flow<List<Item>>
+
+    @Query("SELECT * FROM items WHERE availableQuantity <= :threshold")
+    fun getLowStockItems(threshold: Int): Flow<List<Item>>
 
     @Query("SELECT * FROM items WHERE name LIKE '%' || :query || '%' OR category LIKE '%' || :query || '%'")
     fun searchItems(query: String): Flow<List<Item>>
 
     @Query("SELECT DISTINCT category FROM items ORDER BY category ASC")
     fun getAllCategories(): Flow<List<String>>
+
+    @Query("SELECT COUNT(*) FROM items")
+    fun getTotalItemsCount(): Flow<Int>
+
+    @Query("SELECT SUM(quantity * rentPerDay) FROM items")
+    fun getTotalItemsValue(): Flow<Double>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertItem(item: Item): Long

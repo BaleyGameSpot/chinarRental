@@ -4,6 +4,7 @@ plugins {
     id("com.google.devtools.ksp")
     id("com.google.dagger.hilt.android")
     id("com.google.gms.google-services")
+    id("kotlin-kapt")
     kotlin("kapt")
 }
 
@@ -13,7 +14,7 @@ android {
 
     defaultConfig {
         applicationId = "com.chinarrental.app"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -54,6 +55,13 @@ android {
 
     packaging {
         resources {
+            excludes += "META-INF/DEPENDENCIES"
+            excludes += "META-INF/DEPENDENCIES.txt"
+            excludes += "META-INF/LICENSE"
+            excludes += "META-INF/LICENSE.txt"
+            excludes += "META-INF/NOTICE"
+            excludes += "META-INF/NOTICE.txt"
+            excludes += "META-INF/ASL2.0"
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
@@ -156,5 +164,5 @@ dependencies {
 }
 
 kapt {
-    correctErrorTypes = true
+    correctErrorTypes = true  // ✅ No 'var' keyword
 }

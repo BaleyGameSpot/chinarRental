@@ -9,6 +9,9 @@ interface GuarantorDao {
     @Query("SELECT * FROM guarantors WHERE customerId = :customerId")
     fun getGuarantorsByCustomer(customerId: Long): Flow<List<Guarantor>>
 
+    @Query("SELECT * FROM guarantors WHERE customerId = :customerId")
+    fun getGuarantorsByCustomerId(customerId: Long): Flow<List<Guarantor>>
+
     @Query("SELECT * FROM guarantors WHERE id = :id")
     fun getGuarantorById(id: Long): Flow<Guarantor?>
 

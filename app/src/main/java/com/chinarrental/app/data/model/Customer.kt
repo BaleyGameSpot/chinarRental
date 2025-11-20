@@ -12,15 +12,20 @@ data class Customer(
     val phone2: String = "",
     val email: String = "",
     val address: String = "",
-    val cnicNumber: String = "",
+    val cnic: String = "", // Alias for cnicNumber
+    val cnicNumber: String = "", // Keep for compatibility
     val cnicPhotoFront: String = "",
     val cnicPhotoBack: String = "",
+    val cnicFrontImageUri: String = "", // For ViewModel compatibility
+    val cnicBackImageUri: String = "", // For ViewModel compatibility
     val latitude: Double? = null,
     val longitude: Double? = null,
+    val location: String = "", // Alias for locationName
     val locationName: String = "",
     val hasDiscount: Boolean = false,
     val discountType: DiscountType = DiscountType.NONE,
     val discountValue: Double = 0.0,
+    val discount: Double = 0.0, // Alias for discountValue
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
 )

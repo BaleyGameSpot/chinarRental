@@ -15,6 +15,9 @@ interface BranchDao {
     @Query("SELECT * FROM branches WHERE isActive = 1 ORDER BY name ASC")
     fun getActiveBranches(): Flow<List<Branch>>
 
+    @Query("SELECT * FROM branches WHERE name LIKE '%' || :query || '%' OR address LIKE '%' || :query || '%' OR phone LIKE '%' || :query || '%'")
+    fun searchBranches(query: String): Flow<List<Branch>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertBranch(branch: Branch): Long
 

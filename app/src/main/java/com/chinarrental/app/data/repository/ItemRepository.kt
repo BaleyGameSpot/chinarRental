@@ -17,7 +17,7 @@ class ItemRepository @Inject constructor(
     fun getItemById(id: Long): Flow<Item?> = itemDao.getItemById(id)
 
     fun getItemsByCategory(category: ItemCategory): Flow<List<Item>> =
-        itemDao.getItemsByCategory(category)
+        itemDao.getItemsByCategory(category.name)
 
     fun getAvailableItems(): Flow<List<Item>> = itemDao.getAvailableItems()
 

@@ -11,6 +11,16 @@ class Converters {
     fun toItemStatus(value: String): ItemStatus = ItemStatus.valueOf(value)
 
     @TypeConverter
+    fun fromItemCategory(value: ItemCategory): String = value.name
+
+    @TypeConverter
+    fun toItemCategory(value: String): ItemCategory = try {
+        ItemCategory.valueOf(value)
+    } catch (e: IllegalArgumentException) {
+        ItemCategory.OTHER
+    }
+
+    @TypeConverter
     fun fromDiscountType(value: DiscountType): String = value.name
 
     @TypeConverter
@@ -39,6 +49,16 @@ class Converters {
 
     @TypeConverter
     fun toTransactionType(value: String): TransactionType = TransactionType.valueOf(value)
+
+    @TypeConverter
+    fun fromTransactionCategory(value: TransactionCategory): String = value.name
+
+    @TypeConverter
+    fun toTransactionCategory(value: String): TransactionCategory = try {
+        TransactionCategory.valueOf(value)
+    } catch (e: IllegalArgumentException) {
+        TransactionCategory.OTHER_EXPENSE
+    }
 
     @TypeConverter
     fun fromReminderType(value: ReminderType): String = value.name

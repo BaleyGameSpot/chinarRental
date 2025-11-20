@@ -93,7 +93,7 @@ fun InventoryScreen(
                         label = { Text("All") }
                     )
                 }
-                items(ItemCategory.values()) { category ->
+                items(ItemCategory.values().toList()) { category ->
                     FilterChip(
                         selected = uiState.selectedCategory == category,
                         onClick = { viewModel.filterByCategory(category) },
@@ -181,7 +181,7 @@ fun ItemCard(item: Item, onDelete: () -> Unit) {
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = item.category.name,
+                        text = item.category, // Already a String, no need for .name
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary
                     )

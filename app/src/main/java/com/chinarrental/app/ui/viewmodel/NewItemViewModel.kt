@@ -101,11 +101,13 @@ class NewItemViewModel @Inject constructor(
             val item = Item(
                 name = state.name,
                 description = state.description,
-                category = state.category,
+                category = state.category.name, // Convert enum to String
                 rentPerDay = rentPerDay,
+                quantity = totalQuantity,
                 totalQuantity = totalQuantity,
                 availableQuantity = availableQuantity,
-                imageUri = state.imageUri
+                imageUrl = state.imageUri ?: "",
+                imageUri = state.imageUri ?: ""
             )
 
             val result = itemRepository.insertItem(item)

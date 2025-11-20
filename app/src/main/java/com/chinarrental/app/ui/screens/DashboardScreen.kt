@@ -188,42 +188,42 @@ fun DashboardScreen(
                     }
                 }
 
-            Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
-            Text(
-                text = "Quick Access",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
+                Text(
+                    text = "Quick Access",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-            // Menu Grid
-            val menuItems = listOf(
-                MenuItem("Rentals", Icons.Default.ShoppingCart, Screen.Rentals.route),
-                MenuItem("Customers", Icons.Default.Person, Screen.Customers.route),
-                MenuItem("Inventory", Icons.Default.Inventory, Screen.Inventory.route),
-                MenuItem("Payments", Icons.Default.Payment, Screen.Payments.route),
-                MenuItem("Roznamcha", Icons.Default.AccountBalance, Screen.Roznamcha.route),
-                MenuItem("Reminders", Icons.Default.Notifications, Screen.Reminders.route),
-                MenuItem("Bills", Icons.Default.Receipt, Screen.Bills.route),
-                MenuItem("Reports", Icons.Default.Assessment, Screen.Reports.route),
-                MenuItem("Settings", Icons.Default.Settings, Screen.Settings.route)
-            )
+                // Menu Grid
+                val menuItems = listOf(
+                    MenuItem("Rentals", Icons.Default.ShoppingCart, Screen.Rentals.route),
+                    MenuItem("Customers", Icons.Default.Person, Screen.Customers.route),
+                    MenuItem("Inventory", Icons.Default.Inventory, Screen.Inventory.route),
+                    MenuItem("Payments", Icons.Default.Payment, Screen.Payments.route),
+                    MenuItem("Roznamcha", Icons.Default.AccountBalance, Screen.Roznamcha.route),
+                    MenuItem("Reminders", Icons.Default.Notifications, Screen.Reminders.route),
+                    MenuItem("Bills", Icons.Default.Receipt, Screen.Bills.route),
+                    MenuItem("Reports", Icons.Default.Assessment, Screen.Reports.route),
+                    MenuItem("Settings", Icons.Default.Settings, Screen.Settings.route)
+                )
 
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(3),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(menuItems) { item ->
-                    MenuItemCard(
-                        title = item.title,
-                        icon = item.icon,
-                        onClick = { navController.navigate(item.route) }
-                    )
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(3),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(menuItems) { item ->
+                        MenuItemCard(
+                            title = item.title,
+                            icon = item.icon,
+                            onClick = { navController.navigate(item.route) }
+                        )
+                    }
                 }
-            }
             }
         }
     }

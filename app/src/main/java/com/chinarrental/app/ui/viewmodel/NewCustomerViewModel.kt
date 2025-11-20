@@ -93,26 +93,34 @@ class NewCustomerViewModel @Inject constructor(
         _uiState.value = state.copy(isSaving = true, error = null)
 
         viewModelScope.launch {
-            val customer = Customer(
-                name = state.name,
-                phone = state.phone,
-                cnic = state.cnic,
-                address = state.address,
-                location = state.location,
-                cnicFrontImageUri = state.cnicFrontImageUri,
-                cnicBackImageUri = state.cnicBackImageUri,
-                discount = discount
-            )
+            val customer = state.cnicBackImageUri?.let {
+                state.cnicFrontImageUri?.let { it1 ->
+                    state.location?.let { it2 ->
+                        Customer(
+                            name = state.name,
+                            phone = state.phone,
+                            cnic = state.cnic,
+                            address = state.address,
+                            location = it2,
+                            cnicFrontImageUri = it1,
+                            cnicBackImageUri = it,
+                            discount = discount
+                        )
+                    }
+                }
+            }
 
-            val result = customerRepository.insertCustomer(customer)
+            val result = customer?.let { customerRepository.insertCustomer(it) }
 
-            result.onSuccess {
-                _uiState.value = NewCustomerUiState(saveSuccess = true)
-            }.onFailure { e ->
-                _uiState.value = state.copy(
-                    isSaving = false,
-                    error = e.message ?: "Failed to save customer"
-                )
+            if (result != null) {
+                result.onSuccess {
+                    _uiState.value = NewCustomerUiState(saveSuccess = true)
+                }.onFailure { e ->
+                    _uiState.value = state.copy(
+                        isSaving = false,
+                        error = e.message ?: "Failed to save customer"
+                    )
+                }
             }
         }
     }

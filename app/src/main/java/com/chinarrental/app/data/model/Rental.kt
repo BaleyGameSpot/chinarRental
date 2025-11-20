@@ -37,9 +37,11 @@ data class Rental(
     val actualReturnDate: Long? = null,
     val rentPerDay: Double,
     val totalRent: Double = 0.0,
+    val totalAmount: Double = totalRent, // Alias for compatibility
     val overdueRent: Double = 0.0,
     val damageCharges: Double = 0.0,
     val discountAmount: Double = 0.0,
+    val advanceAmount: Double = 0.0,
     val finalAmount: Double = 0.0,
     val paidAmount: Double = 0.0,
     val remainingAmount: Double = 0.0,
