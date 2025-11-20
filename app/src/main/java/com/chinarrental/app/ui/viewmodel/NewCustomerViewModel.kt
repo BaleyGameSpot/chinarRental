@@ -93,34 +93,27 @@ class NewCustomerViewModel @Inject constructor(
         _uiState.value = state.copy(isSaving = true, error = null)
 
         viewModelScope.launch {
-            val customer = state.cnicBackImageUri?.let {
-                state.cnicFrontImageUri?.let { it1 ->
-                    state.location?.let { it2 ->
-                        Customer(
-                            name = state.name,
-                            phone = state.phone,
-                            cnic = state.cnic,
-                            address = state.address,
-                            location = it2,
-                            cnicFrontImageUri = it1,
-                            cnicBackImageUri = it,
-                            discount = discount
-                        )
-                    }
-                }
-            }
+            // Create customer object with all fields (optional fields can be empty/null)
+            val customer = Customer(
+                name = state.name,
+                phone = state.phone,
+                cnic = state.cnic,
+                address = state.address,
+                location = state.location ?: "",
+                cnicFrontImageUri = state.cnicFrontImageUri ?: "",
+                cnicBackImageUri = state.cnicBackImageUri ?: "",
+                discount = discount
+            )
 
-            val result = customer?.let { customerRepository.insertCustomer(it) }
+            val result = customerRepository.insertCustomer(customer)
 
-            if (result != null) {
-                result.onSuccess {
-                    _uiState.value = NewCustomerUiState(saveSuccess = true)
-                }.onFailure { e ->
-                    _uiState.value = state.copy(
-                        isSaving = false,
-                        error = e.message ?: "Failed to save customer"
-                    )
-                }
+            result.onSuccess {
+                _uiState.value = NewCustomerUiState(saveSuccess = true)
+            }.onFailure { e ->
+                _uiState.value = state.copy(
+                    isSaving = false,
+                    error = e.message ?: "Failed to save customer"
+                )
             }
         }
     }
