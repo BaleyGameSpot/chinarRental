@@ -201,7 +201,7 @@ fun DashboardScreen(
 
                             Spacer(modifier = Modifier.height(16.dp))
 
-                            HorizontalDivider(
+                            Divider(
                                 thickness = 1.dp,
                                 color = TextHint.copy(alpha = 0.3f)
                             )
