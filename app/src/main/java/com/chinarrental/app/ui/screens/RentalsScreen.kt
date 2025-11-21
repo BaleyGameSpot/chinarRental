@@ -1,9 +1,14 @@
 package com.chinarrental.app.ui.screens
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -11,12 +16,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.chinarrental.app.data.model.*
 import com.chinarrental.app.ui.navigation.Screen
+import com.chinarrental.app.ui.theme.*
 import com.chinarrental.app.ui.viewmodel.RentalsViewModel
 import com.chinarrental.app.ui.viewmodel.NewRentalViewModel
 import java.text.SimpleDateFormat
@@ -62,30 +71,67 @@ fun RentalsScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .background(BackgroundLight)
                 .padding(paddingValues)
         ) {
-            if (showStatusFilter) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+            AnimatedVisibility(
+                visible = showStatusFilter,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = Color.White,
+                    shadowElevation = 2.dp
                 ) {
-                    FilterChip(
-                        selected = uiState.selectedStatus == null,
-                        onClick = { viewModel.filterByStatus(null) },
-                        label = { Text("All") }
-                    )
-                    FilterChip(
-                        selected = uiState.selectedStatus == RentalStatus.ACTIVE,
-                        onClick = { viewModel.filterByStatus(RentalStatus.ACTIVE) },
-                        label = { Text("Active") }
-                    )
-                    FilterChip(
-                        selected = uiState.selectedStatus == RentalStatus.RETURNED,
-                        onClick = { viewModel.filterByStatus(RentalStatus.RETURNED) },
-                        label = { Text("Returned") }
-                    )
+                    LazyRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        item {
+                            FilterChip(
+                                selected = uiState.selectedStatus == null,
+                                onClick = { viewModel.filterByStatus(null) },
+                                label = { Text("All Rentals") },
+                                leadingIcon = if (uiState.selectedStatus == null) {
+                                    { Icon(Icons.Default.Check, null, Modifier.size(18.dp)) }
+                                } else null,
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = Primary,
+                                    selectedLabelColor = Color.White
+                                )
+                            )
+                        }
+                        item {
+                            FilterChip(
+                                selected = uiState.selectedStatus == RentalStatus.ACTIVE,
+                                onClick = { viewModel.filterByStatus(RentalStatus.ACTIVE) },
+                                label = { Text("Active") },
+                                leadingIcon = if (uiState.selectedStatus == RentalStatus.ACTIVE) {
+                                    { Icon(Icons.Default.Check, null, Modifier.size(18.dp)) }
+                                } else null,
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = Success,
+                                    selectedLabelColor = Color.White
+                                )
+                            )
+                        }
+                        item {
+                            FilterChip(
+                                selected = uiState.selectedStatus == RentalStatus.RETURNED,
+                                onClick = { viewModel.filterByStatus(RentalStatus.RETURNED) },
+                                label = { Text("Returned") },
+                                leadingIcon = if (uiState.selectedStatus == RentalStatus.RETURNED) {
+                                    { Icon(Icons.Default.Check, null, Modifier.size(18.dp)) }
+                                } else null,
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = StatusReturned,
+                                    selectedLabelColor = Color.White
+                                )
+                            )
+                        }
+                    }
                 }
             }
 
@@ -137,96 +183,181 @@ fun RentalCard(rental: Rental, onReturn: () -> Unit, onDelete: () -> Unit) {
     var showDeleteDialog by remember { mutableStateOf(false) }
     val dateFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
 
+    val statusColor = when (rental.status) {
+        RentalStatus.ACTIVE -> Success
+        RentalStatus.RETURNED -> StatusReturned
+        RentalStatus.OVERDUE -> StatusOverdue
+        RentalStatus.CANCELLED -> StatusCancelled
+    }
+
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(2.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp)),
+        elevation = CardDefaults.cardElevation(4.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        )
     ) {
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "Rental #${rental.id}",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "Start: ${dateFormat.format(Date(rental.startDate))}",
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                    Text(
-                        text = "Return: ${dateFormat.format(Date(rental.expectedReturnDate))}",
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-
-                AssistChip(
-                    onClick = { },
-                    label = { Text(rental.status.name) },
-                    colors = AssistChipDefaults.assistChipColors(
-                        containerColor = if (rental.status == RentalStatus.ACTIVE)
-                            MaterialTheme.colorScheme.primaryContainer
-                        else
-                            MaterialTheme.colorScheme.secondaryContainer
+                .background(
+                    Brush.linearGradient(
+                        colors = listOf(
+                            Primary.copy(alpha = 0.03f),
+                            Accent.copy(alpha = 0.01f)
+                        )
                     )
                 )
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp)
             ) {
-                Column {
-                    Text("Total Amount", style = MaterialTheme.typography.bodySmall)
-                    Text(
-                        "Rs. ${rental.totalAmount}",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-                Column(horizontalAlignment = Alignment.End) {
-                    Text("Remaining", style = MaterialTheme.typography.bodySmall)
-                    Text(
-                        "Rs. ${rental.remainingAmount}",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = if (rental.remainingAmount > 0)
-                            MaterialTheme.colorScheme.error
-                        else
-                            MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
-
-            if (rental.status == RentalStatus.ACTIVE) {
-                Spacer(modifier = Modifier.height(12.dp))
+                // Header with Status Badge
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top
                 ) {
-                    OutlinedButton(
-                        onClick = { showReturnDialog = true },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text("Return")
+                    Column(modifier = Modifier.weight(1f)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.ShoppingCart,
+                                contentDescription = null,
+                                tint = Primary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Rental #${rental.id}",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary
+                            )
+                        }
                     }
-                    OutlinedButton(
-                        onClick = { showDeleteDialog = true },
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = MaterialTheme.colorScheme.error
-                        )
+
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = statusColor.copy(alpha = 0.15f)
                     ) {
-                        Text("Delete")
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(8.dp)
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(statusColor)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = rental.status.name,
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = statusColor
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Dates Section
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    DateInfoItem(
+                        icon = Icons.Default.CalendarToday,
+                        label = "Start Date",
+                        value = dateFormat.format(Date(rental.startDate)),
+                        modifier = Modifier.weight(1f)
+                    )
+                    DateInfoItem(
+                        icon = Icons.Default.EventAvailable,
+                        label = "Return Date",
+                        value = dateFormat.format(Date(rental.expectedReturnDate)),
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                HorizontalDivider(
+                    thickness = 1.dp,
+                    color = TextHint.copy(alpha = 0.2f)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Amount Section
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    AmountInfoCard(
+                        label = "Total Amount",
+                        amount = "Rs. ${String.format("%.0f", rental.totalAmount)}",
+                        icon = Icons.Default.CurrencyRupee,
+                        color = Primary
+                    )
+
+                    AmountInfoCard(
+                        label = "Remaining",
+                        amount = "Rs. ${String.format("%.0f", rental.remainingAmount)}",
+                        icon = Icons.Default.AccountBalanceWallet,
+                        color = if (rental.remainingAmount > 0) Error else Success
+                    )
+                }
+
+                if (rental.status == RentalStatus.ACTIVE) {
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Button(
+                            onClick = { showReturnDialog = true },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Success
+                            )
+                        ) {
+                            Icon(
+                                Icons.Default.AssignmentReturn,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Return", fontWeight = FontWeight.SemiBold)
+                        }
+
+                        OutlinedButton(
+                            onClick = { showDeleteDialog = true },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = Error
+                            ),
+                            border = ButtonDefaults.outlinedButtonBorder.copy(
+                                brush = Brush.linearGradient(listOf(Error, Error))
+                            )
+                        ) {
+                            Icon(
+                                Icons.Default.Delete,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Delete", fontWeight = FontWeight.SemiBold)
+                        }
                     }
                 }
             }
@@ -280,6 +411,72 @@ fun RentalCard(rental: Rental, onReturn: () -> Unit, onDelete: () -> Unit) {
     }
 }
 
+@Composable
+fun DateInfoItem(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = TextSecondary,
+                modifier = Modifier.size(16.dp)
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = TextSecondary
+            )
+        }
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = TextPrimary
+        )
+    }
+}
+
+@Composable
+fun AmountInfoCard(
+    label: String,
+    amount: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    color: Color
+) {
+    Column {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = color,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                color = TextSecondary
+            )
+        }
+        Spacer(modifier = Modifier.height(6.dp))
+        Text(
+            text = amount,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = color
+        )
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NewRentalScreen(
@@ -315,11 +512,61 @@ fun NewRentalScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .background(BackgroundLight)
                 .padding(paddingValues)
-                .padding(16.dp)
+                .padding(20.dp)
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // Header Card
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp)),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.White
+                ),
+                elevation = CardDefaults.cardElevation(2.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            Brush.linearGradient(
+                                colors = listOf(
+                                    Primary.copy(alpha = 0.08f),
+                                    Accent.copy(alpha = 0.03f)
+                                )
+                            )
+                        )
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ShoppingCart,
+                        contentDescription = null,
+                        tint = Primary,
+                        modifier = Modifier.size(28.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = "Create New Rental",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary
+                        )
+                        Text(
+                            text = "Fill in the details below",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             // Customer Selection
             ExposedDropdownMenuBox(
                 expanded = expandedCustomer,
@@ -330,11 +577,19 @@ fun NewRentalScreen(
                     onValueChange = {},
                     readOnly = true,
                     label = { Text("Customer *") },
+                    leadingIcon = {
+                        Icon(Icons.Default.Person, contentDescription = null, tint = Primary)
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .menuAnchor(),
+                    shape = RoundedCornerShape(14.dp),
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expandedCustomer) },
-                    isError = uiState.error?.contains("customer", ignoreCase = true) == true
+                    isError = uiState.error?.contains("customer", ignoreCase = true) == true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Primary,
+                        focusedLabelColor = Primary
+                    )
                 )
 
                 ExposedDropdownMenu(
@@ -347,6 +602,9 @@ fun NewRentalScreen(
                             onClick = {
                                 viewModel.selectCustomer(customer)
                                 expandedCustomer = false
+                            },
+                            leadingIcon = {
+                                Icon(Icons.Default.Person, contentDescription = null)
                             }
                         )
                     }
@@ -363,11 +621,19 @@ fun NewRentalScreen(
                     onValueChange = {},
                     readOnly = true,
                     label = { Text("Item *") },
+                    leadingIcon = {
+                        Icon(Icons.Default.Inventory, contentDescription = null, tint = Primary)
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .menuAnchor(),
+                    shape = RoundedCornerShape(14.dp),
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expandedItem) },
-                    isError = uiState.error?.contains("item", ignoreCase = true) == true
+                    isError = uiState.error?.contains("item", ignoreCase = true) == true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Primary,
+                        focusedLabelColor = Primary
+                    )
                 )
 
                 ExposedDropdownMenu(
@@ -380,6 +646,9 @@ fun NewRentalScreen(
                             onClick = {
                                 viewModel.selectItem(item)
                                 expandedItem = false
+                            },
+                            leadingIcon = {
+                                Icon(Icons.Default.Inventory, contentDescription = null)
                             }
                         )
                     }
@@ -390,53 +659,126 @@ fun NewRentalScreen(
                 value = uiState.quantity,
                 onValueChange = { viewModel.updateQuantity(it) },
                 label = { Text("Quantity *") },
+                leadingIcon = {
+                    Icon(Icons.Default.ShoppingBasket, contentDescription = null, tint = Primary)
+                },
                 modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(14.dp),
                 singleLine = true,
-                isError = uiState.error?.contains("quantity", ignoreCase = true) == true
+                isError = uiState.error?.contains("quantity", ignoreCase = true) == true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Primary,
+                    focusedLabelColor = Primary
+                )
             )
 
             OutlinedTextField(
                 value = uiState.advanceAmount,
                 onValueChange = { viewModel.updateAdvanceAmount(it) },
                 label = { Text("Advance Amount (Rs.)") },
+                leadingIcon = {
+                    Icon(Icons.Default.CurrencyRupee, contentDescription = null, tint = Primary)
+                },
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                shape = RoundedCornerShape(14.dp),
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Primary,
+                    focusedLabelColor = Primary
+                )
             )
 
             OutlinedTextField(
                 value = uiState.notes,
                 onValueChange = { viewModel.updateNotes(it) },
                 label = { Text("Notes") },
+                leadingIcon = {
+                    Icon(Icons.Default.Notes, contentDescription = null, tint = Primary)
+                },
                 modifier = Modifier.fillMaxWidth(),
-                maxLines = 3
+                shape = RoundedCornerShape(14.dp),
+                maxLines = 3,
+                minLines = 3,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Primary,
+                    focusedLabelColor = Primary
+                )
             )
 
             uiState.error?.let { error ->
                 Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp)),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer
-                    )
+                        containerColor = ErrorLight
+                    ),
+                    elevation = CardDefaults.cardElevation(2.dp)
                 ) {
-                    Text(
-                        text = error,
-                        modifier = Modifier.padding(16.dp),
-                        color = MaterialTheme.colorScheme.onErrorContainer
-                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Error,
+                            contentDescription = null,
+                            tint = Error,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = error,
+                            color = Error,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
             }
 
+            Spacer(modifier = Modifier.height(8.dp))
+
             Button(
                 onClick = { viewModel.saveRental() },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !uiState.isSaving
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(14.dp),
+                enabled = !uiState.isSaving,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Primary,
+                    disabledContainerColor = Primary.copy(alpha = 0.6f)
+                ),
+                elevation = ButtonDefaults.buttonElevation(
+                    defaultElevation = 4.dp,
+                    pressedElevation = 8.dp
+                )
             ) {
                 if (uiState.isSaving) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(24.dp),
-                        color = MaterialTheme.colorScheme.onPrimary
+                        color = Color.White
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        "Creating...",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
                     )
                 } else {
-                    Text("Create Rental")
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        "Create Rental",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
                 }
             }
         }

@@ -1,18 +1,21 @@
 package com.chinarrental.app.ui.screens
 
+import androidx.compose.animation.*
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -20,6 +23,7 @@ import androidx.navigation.NavController
 import com.chinarrental.app.data.model.Item
 import com.chinarrental.app.data.model.ItemCategory
 import com.chinarrental.app.ui.navigation.Screen
+import com.chinarrental.app.ui.theme.*
 import com.chinarrental.app.ui.viewmodel.InventoryViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -64,41 +68,80 @@ fun InventoryScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .background(BackgroundLight)
                 .padding(paddingValues)
         ) {
-            if (showSearchBar) {
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = {
-                        searchQuery = it
-                        viewModel.searchItems(it)
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    placeholder = { Text("Search items...") },
-                    singleLine = true
-                )
+            AnimatedVisibility(
+                visible = showSearchBar,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = Color.White,
+                    shadowElevation = 2.dp
+                ) {
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = {
+                            searchQuery = it
+                            viewModel.searchItems(it)
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        placeholder = { Text("Search items...") },
+                        leadingIcon = {
+                            Icon(Icons.Default.Search, null, tint = Primary)
+                        },
+                        shape = RoundedCornerShape(14.dp),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Primary,
+                            focusedLabelColor = Primary
+                        )
+                    )
+                }
             }
 
             // Category filter chips
-            LazyRow(
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = Color.White,
+                shadowElevation = 1.dp
             ) {
-                item {
-                    FilterChip(
-                        selected = uiState.selectedCategory == null,
-                        onClick = { viewModel.filterByCategory(null) },
-                        label = { Text("All") }
-                    )
-                }
-                items(ItemCategory.values().toList()) { category ->
-                    FilterChip(
-                        selected = uiState.selectedCategory == category,
-                        onClick = { viewModel.filterByCategory(category) },
-                        label = { Text(category.name) }
-                    )
+                LazyRow(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    item {
+                        FilterChip(
+                            selected = uiState.selectedCategory == null,
+                            onClick = { viewModel.filterByCategory(null) },
+                            label = { Text("All Categories") },
+                            leadingIcon = if (uiState.selectedCategory == null) {
+                                { Icon(Icons.Default.Check, null, Modifier.size(18.dp)) }
+                            } else null,
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = Primary,
+                                selectedLabelColor = Color.White
+                            )
+                        )
+                    }
+                    items(ItemCategory.values().toList()) { category ->
+                        FilterChip(
+                            selected = uiState.selectedCategory == category,
+                            onClick = { viewModel.filterByCategory(category) },
+                            label = { Text(category.name) },
+                            leadingIcon = if (uiState.selectedCategory == category) {
+                                { Icon(Icons.Default.Check, null, Modifier.size(18.dp)) }
+                            } else null,
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = Accent,
+                                selectedLabelColor = Color.White
+                            )
+                        )
+                    }
                 }
             }
 
@@ -160,83 +203,130 @@ fun InventoryScreen(
 fun ItemCard(item: Item, onDelete: () -> Unit) {
     var showDeleteDialog by remember { mutableStateOf(false) }
 
+    val categoryColor = when (item.category.uppercase()) {
+        "ELECTRONICS" -> CardGradient1
+        "FURNITURE" -> CardGradient2
+        "VEHICLES" -> CardGradient3
+        "TOOLS" -> GradientOrange
+        else -> Primary
+    }
+
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(2.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp)),
+        elevation = CardDefaults.cardElevation(4.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        )
     ) {
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .background(
+                    Brush.linearGradient(
+                        colors = listOf(
+                            categoryColor.copy(alpha = 0.08f),
+                            categoryColor.copy(alpha = 0.02f)
+                        )
+                    )
+                )
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp)
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = item.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = item.category, // Already a String, no need for .name
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    if (item.description.isNotBlank()) {
-                        Text(
-                            text = item.description,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                // Header Row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Inventory2,
+                                contentDescription = null,
+                                tint = categoryColor,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = item.name,
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = categoryColor.copy(alpha = 0.15f)
+                        ) {
+                            Text(
+                                text = item.category,
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = categoryColor,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                            )
+                        }
+
+                        if (item.description.isNotBlank()) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = item.description,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = TextSecondary,
+                                maxLines = 2
+                            )
+                        }
+                    }
+
+                    IconButton(
+                        onClick = { showDeleteDialog = true },
+                        colors = IconButtonDefaults.iconButtonColors(
+                            containerColor = ErrorLight
+                        )
+                    ) {
+                        Icon(
+                            Icons.Default.Delete,
+                            contentDescription = "Delete",
+                            tint = Error,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }
 
-                IconButton(onClick = { showDeleteDialog = true }) {
-                    Icon(
-                        Icons.Default.Delete,
-                        contentDescription = "Delete",
-                        tint = MaterialTheme.colorScheme.error
-                    )
-                }
-            }
+                Spacer(modifier = Modifier.height(16.dp))
 
-            Spacer(modifier = Modifier.height(8.dp))
+                HorizontalDivider(
+                    thickness = 1.dp,
+                    color = TextHint.copy(alpha = 0.2f)
+                )
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column {
-                    Text(
-                        text = "Rent/Day",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = "Rs. ${item.rentPerDay}",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
+                Spacer(modifier = Modifier.height(16.dp))
 
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(
-                        text = "Stock",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                // Details Row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    ItemInfoCard(
+                        icon = Icons.Default.CurrencyRupee,
+                        label = "Rent per Day",
+                        value = "Rs. ${String.format("%.0f", item.rentPerDay)}",
+                        color = Primary
                     )
-                    Text(
-                        text = "${item.availableQuantity}/${item.totalQuantity}",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = if (item.availableQuantity > 0)
-                            MaterialTheme.colorScheme.primary
-                        else
-                            MaterialTheme.colorScheme.error
+
+                    ItemInfoCard(
+                        icon = Icons.Default.Inventory,
+                        label = "Stock Available",
+                        value = "${item.availableQuantity}/${item.totalQuantity}",
+                        color = if (item.availableQuantity > 0) Success else Error
                     )
                 }
             }
@@ -263,6 +353,38 @@ fun ItemCard(item: Item, onDelete: () -> Unit) {
                     Text("Cancel")
                 }
             }
+        )
+    }
+}
+
+@Composable
+fun ItemInfoCard(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    value: String,
+    color: Color
+) {
+    Column {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = color,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                color = TextSecondary
+            )
+        }
+        Spacer(modifier = Modifier.height(6.dp))
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = color
         )
     }
 }
@@ -314,25 +436,39 @@ fun NewItemScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .background(BackgroundLight)
                 .padding(paddingValues)
-                .padding(16.dp),
+                .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             OutlinedTextField(
                 value = uiState.name,
                 onValueChange = { viewModel.updateName(it) },
                 label = { Text("Item Name *") },
+                leadingIcon = { Icon(Icons.Default.Inventory2, null, tint = Primary) },
                 modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(14.dp),
                 singleLine = true,
-                isError = uiState.error?.contains("name", ignoreCase = true) == true
+                isError = uiState.error?.contains("name", ignoreCase = true) == true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Primary,
+                    focusedLabelColor = Primary
+                )
             )
 
             OutlinedTextField(
                 value = uiState.description,
                 onValueChange = { viewModel.updateDescription(it) },
                 label = { Text("Description") },
+                leadingIcon = { Icon(Icons.Default.Description, null, tint = Primary) },
                 modifier = Modifier.fillMaxWidth(),
-                maxLines = 3
+                shape = RoundedCornerShape(14.dp),
+                maxLines = 3,
+                minLines = 3,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Primary,
+                    focusedLabelColor = Primary
+                )
             )
 
             ExposedDropdownMenuBox(
@@ -344,10 +480,16 @@ fun NewItemScreen(
                     onValueChange = {},
                     readOnly = true,
                     label = { Text("Category *") },
+                    leadingIcon = { Icon(Icons.Default.Category, null, tint = Primary) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .menuAnchor(),
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expandedCategory) }
+                    shape = RoundedCornerShape(14.dp),
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expandedCategory) },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Primary,
+                        focusedLabelColor = Primary
+                    )
                 )
 
                 ExposedDropdownMenu(
@@ -357,6 +499,7 @@ fun NewItemScreen(
                     ItemCategory.values().forEach { category ->
                         DropdownMenuItem(
                             text = { Text(category.name) },
+                            leadingIcon = { Icon(Icons.Default.Category, null) },
                             onClick = {
                                 viewModel.updateCategory(category)
                                 expandedCategory = false
@@ -370,45 +513,75 @@ fun NewItemScreen(
                 value = uiState.rentPerDay,
                 onValueChange = { viewModel.updateRentPerDay(it) },
                 label = { Text("Rent Per Day (Rs.) *") },
+                leadingIcon = { Icon(Icons.Default.CurrencyRupee, null, tint = Primary) },
                 modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(14.dp),
                 singleLine = true,
-                isError = uiState.error?.contains("rent", ignoreCase = true) == true
+                isError = uiState.error?.contains("rent", ignoreCase = true) == true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Primary,
+                    focusedLabelColor = Primary
+                )
             )
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 OutlinedTextField(
                     value = uiState.totalQuantity,
                     onValueChange = { viewModel.updateTotalQuantity(it) },
                     label = { Text("Total Quantity *") },
+                    leadingIcon = { Icon(Icons.Default.Numbers, null, tint = Primary) },
                     modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(14.dp),
                     singleLine = true,
-                    isError = uiState.error?.contains("quantity", ignoreCase = true) == true
+                    isError = uiState.error?.contains("quantity", ignoreCase = true) == true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Primary,
+                        focusedLabelColor = Primary
+                    )
                 )
 
                 OutlinedTextField(
                     value = uiState.availableQuantity,
                     onValueChange = { viewModel.updateAvailableQuantity(it) },
                     label = { Text("Available *") },
+                    leadingIcon = { Icon(Icons.Default.CheckCircle, null, tint = Success) },
                     modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(14.dp),
                     singleLine = true,
-                    isError = uiState.error?.contains("available", ignoreCase = true) == true
+                    isError = uiState.error?.contains("available", ignoreCase = true) == true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Primary,
+                        focusedLabelColor = Primary
+                    )
                 )
             }
 
             uiState.error?.let { error ->
                 Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp)),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer
+                        containerColor = ErrorLight
                     )
                 ) {
-                    Text(
-                        text = error,
-                        modifier = Modifier.padding(16.dp),
-                        color = MaterialTheme.colorScheme.onErrorContainer
-                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.Error, null, tint = Error, modifier = Modifier.size(24.dp))
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = error,
+                            color = Error,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
             }
 
@@ -416,16 +589,22 @@ fun NewItemScreen(
 
             Button(
                 onClick = { viewModel.saveItem() },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !uiState.isSaving
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(14.dp),
+                enabled = !uiState.isSaving,
+                colors = ButtonDefaults.buttonColors(containerColor = Primary),
+                elevation = ButtonDefaults.buttonElevation(4.dp, 8.dp)
             ) {
                 if (uiState.isSaving) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White)
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text("Saving...", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                 } else {
-                    Text("Save Item")
+                    Icon(Icons.Default.Save, null, modifier = Modifier.size(24.dp))
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text("Save Item", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                 }
             }
         }
