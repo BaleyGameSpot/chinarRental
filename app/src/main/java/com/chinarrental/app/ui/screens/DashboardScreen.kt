@@ -5,10 +5,9 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -65,6 +64,7 @@ fun DashboardScreen(
                     .fillMaxSize()
                     .background(BackgroundLight)
                     .padding(paddingValues)
+                    .verticalScroll(rememberScrollState())
                     .padding(16.dp)
             ) {
                 // Summary Cards Row 1
@@ -262,18 +262,26 @@ fun DashboardScreen(
                     MenuItem("Settings", Icons.Default.Settings, Screen.Settings.route)
                 )
 
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(3),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(menuItems) { item ->
-                        MenuItemCard(
-                            title = item.title,
-                            icon = item.icon,
-                            onClick = { navController.navigate(item.route) }
-                        )
+                // Grid Layout with 3 columns
+                menuItems.chunked(3).forEach { rowItems ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        rowItems.forEach { item ->
+                            MenuItemCard(
+                                title = item.title,
+                                icon = item.icon,
+                                onClick = { navController.navigate(item.route) },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                        // Fill empty spaces in incomplete rows
+                        repeat(3 - rowItems.size) {
+                            Spacer(modifier = Modifier.weight(1f))
+                        }
                     }
+                    Spacer(modifier = Modifier.height(12.dp))
                 }
             }
         }
@@ -387,7 +395,8 @@ fun FinancialItem(
 fun MenuItemCard(
     title: String,
     icon: ImageVector,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     var isPressed by remember { mutableStateOf(false) }
     val scale by animateFloatAsState(
@@ -399,7 +408,7 @@ fun MenuItemCard(
     )
 
     Card(
-        modifier = Modifier
+        modifier = modifier
             .aspectRatio(1f)
             .scale(scale)
             .clickable(onClick = onClick)
