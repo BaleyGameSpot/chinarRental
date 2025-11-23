@@ -7,6 +7,7 @@ import androidx.navigation.compose.composable
 import com.chinarrental.app.ui.screens.*
 
 sealed class Screen(val route: String) {
+    object Splash : Screen("splash")
     object Dashboard : Screen("dashboard")
     object Rentals : Screen("rentals")
     object RentalDetail : Screen("rental_detail/{rentalId}")
@@ -29,8 +30,11 @@ sealed class Screen(val route: String) {
 fun AppNavigation(navController: NavHostController) {
     NavHost(
         navController = navController,
-        startDestination = Screen.Dashboard.route
+        startDestination = Screen.Splash.route
     ) {
+        composable(Screen.Splash.route) {
+            SplashScreen(navController)
+        }
         composable(Screen.Dashboard.route) {
             DashboardScreen(navController)
         }
