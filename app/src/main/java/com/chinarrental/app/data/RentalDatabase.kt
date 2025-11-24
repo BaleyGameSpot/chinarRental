@@ -21,7 +21,7 @@ import com.chinarrental.app.data.model.*
         User::class,
         Branch::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

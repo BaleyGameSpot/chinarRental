@@ -49,6 +49,8 @@ data class Rental(
     val pickupLocation: String = "",
     val pickupLatitude: Double? = null,
     val pickupLongitude: Double? = null,
+    val guarantorName: String = "",
+    val guarantorMobile: String = "",
     val notes: String = "",
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()

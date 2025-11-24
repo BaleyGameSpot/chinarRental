@@ -68,6 +68,13 @@ fun CustomersScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = { viewModel.loadCustomers() }) {
+                        Icon(
+                            Icons.Default.Refresh,
+                            "Refresh",
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
                     IconButton(onClick = { showSearchBar = !showSearchBar }) {
                         Icon(
                             if (showSearchBar) Icons.Default.Close else Icons.Default.Search,
@@ -210,6 +217,7 @@ fun CustomersScreen(
                     items(uiState.customers, key = { it.id }) { customer ->
                         CustomerCard(
                             customer = customer,
+                            onClick = { navController.navigate("customer_detail/${customer.id}") },
                             onDelete = { viewModel.deleteCustomer(customer) }
                         )
                     }
@@ -220,7 +228,11 @@ fun CustomersScreen(
 }
 
 @Composable
-fun CustomerCard(customer: Customer, onDelete: () -> Unit) {
+fun CustomerCard(
+    customer: Customer,
+    onClick: () -> Unit,
+    onDelete: () -> Unit
+) {
     var showDeleteDialog by remember { mutableStateOf(false) }
 
     Card(
@@ -230,7 +242,8 @@ fun CustomerCard(customer: Customer, onDelete: () -> Unit) {
                 elevation = 2.dp,
                 shape = RoundedCornerShape(16.dp),
                 spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-            ),
+            )
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
@@ -709,6 +722,244 @@ fun NewCustomerScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
             }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CustomerDetailScreen(
+    navController: NavController,
+    customerId: Long,
+    viewModel: CustomersViewModel = hiltViewModel()
+) {
+    val uiState by viewModel.uiState.collectAsState()
+    val customer = uiState.customers.find { it.id == customerId }
+
+    LaunchedEffect(customerId) {
+        viewModel.loadCustomers()
+    }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Customer Details") },
+                navigationIcon = {
+                    IconButton(onClick = { navController.navigateUp() }) {
+                        Icon(
+                            Icons.Default.ArrowBack,
+                            "Back",
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            )
+        }
+    ) { paddingValues ->
+        if (customer == null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("Customer not found", style = MaterialTheme.typography.bodyLarge)
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .verticalScroll(rememberScrollState())
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Header Card with Avatar
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    ),
+                    elevation = CardDefaults.cardElevation(2.dp)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(80.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    brush = Brush.linearGradient(
+                                        colors = listOf(
+                                            MaterialTheme.colorScheme.primary,
+                                            MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
+                                        )
+                                    )
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = customer.name.firstOrNull()?.uppercase() ?: "?",
+                                style = MaterialTheme.typography.displaySmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                        }
+
+                        Text(
+                            text = customer.name,
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+
+                        if (customer.discountPercentage > 0) {
+                            Surface(
+                                shape = RoundedCornerShape(20.dp),
+                                color = MaterialTheme.colorScheme.secondary
+                            ) {
+                                Text(
+                                    text = "${customer.discountPercentage}% Discount",
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSecondary
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Contact Information
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    ),
+                    elevation = CardDefaults.cardElevation(2.dp)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Text(
+                            text = "Contact Information",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+
+                        DetailRow(
+                            icon = Icons.Default.Phone,
+                            label = "Phone",
+                            value = customer.phone
+                        )
+
+                        if (customer.cnic.isNotEmpty()) {
+                            DetailRow(
+                                icon = Icons.Default.CreditCard,
+                                label = "CNIC",
+                                value = customer.cnic
+                            )
+                        }
+
+                        if (customer.address.isNotEmpty()) {
+                            DetailRow(
+                                icon = Icons.Default.LocationOn,
+                                label = "Address",
+                                value = customer.address
+                            )
+                        }
+                    }
+                }
+
+                // Additional Information
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    ),
+                    elevation = CardDefaults.cardElevation(2.dp)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Text(
+                            text = "Additional Details",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+
+                        DetailRow(
+                            icon = Icons.Default.CalendarToday,
+                            label = "Customer Since",
+                            value = java.text.SimpleDateFormat("dd MMM yyyy", java.util.Locale.getDefault())
+                                .format(java.util.Date(customer.createdAt))
+                        )
+
+                        if (customer.discountPercentage > 0) {
+                            DetailRow(
+                                icon = Icons.Default.LocalOffer,
+                                label = "Discount",
+                                value = "${customer.discountPercentage}%"
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun DetailRow(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    value: String
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.Top
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(24.dp)
+        )
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface
+            )
         }
     }
 }

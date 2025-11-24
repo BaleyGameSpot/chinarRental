@@ -16,6 +16,8 @@ data class NewItemUiState(
     val name: String = "",
     val description: String = "",
     val category: ItemCategory = ItemCategory.TENT,
+    val customCategory: String = "",
+    val isCustomCategory: Boolean = false,
     val rentPerDay: String = "",
     val totalQuantity: String = "",
     val availableQuantity: String = "",
@@ -42,7 +44,15 @@ class NewItemViewModel @Inject constructor(
     }
 
     fun updateCategory(category: ItemCategory) {
-        _uiState.value = _uiState.value.copy(category = category)
+        _uiState.value = _uiState.value.copy(category = category, isCustomCategory = false)
+    }
+
+    fun updateCustomCategory(customCategory: String) {
+        _uiState.value = _uiState.value.copy(customCategory = customCategory, error = null)
+    }
+
+    fun setCustomCategoryMode(isCustom: Boolean) {
+        _uiState.value = _uiState.value.copy(isCustomCategory = isCustom)
     }
 
     fun updateRentPerDay(rent: String) {
@@ -77,6 +87,12 @@ class NewItemViewModel @Inject constructor(
             return
         }
 
+        // Validate custom category if selected
+        if (state.isCustomCategory && state.customCategory.isBlank()) {
+            _uiState.value = state.copy(error = "Custom category name is required")
+            return
+        }
+
         val rentPerDay = state.rentPerDay.toDoubleOrNull()
         if (rentPerDay == null || rentPerDay <= 0) {
             _uiState.value = state.copy(error = "Valid rent per day is required")
@@ -98,10 +114,17 @@ class NewItemViewModel @Inject constructor(
         _uiState.value = state.copy(isSaving = true, error = null)
 
         viewModelScope.launch {
+            // Use custom category if selected, otherwise use enum category
+            val categoryName = if (state.isCustomCategory) {
+                state.customCategory.uppercase().replace(" ", "_")
+            } else {
+                state.category.name
+            }
+
             val item = Item(
                 name = state.name,
                 description = state.description,
-                category = state.category.name, // Convert enum to String
+                category = categoryName, // Use custom or enum category
                 rentPerDay = rentPerDay,
                 quantity = totalQuantity,
                 totalQuantity = totalQuantity,

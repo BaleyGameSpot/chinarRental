@@ -50,6 +50,9 @@ fun RentalsScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = { viewModel.loadRentals() }) {
+                        Icon(Icons.Default.Refresh, "Refresh")
+                    }
                     IconButton(onClick = { showStatusFilter = !showStatusFilter }) {
                         Icon(Icons.Default.FilterList, "Filter")
                     }
@@ -666,6 +669,86 @@ fun NewRentalScreen(
                 shape = RoundedCornerShape(14.dp),
                 singleLine = true,
                 isError = uiState.error?.contains("quantity", ignoreCase = true) == true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Primary,
+                    focusedLabelColor = Primary
+                )
+            )
+
+            // Date and Time Selection
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                OutlinedTextField(
+                    value = java.text.SimpleDateFormat("dd MMM yyyy, hh:mm a", java.util.Locale.getDefault())
+                        .format(java.util.Date(uiState.startDate)),
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Start Date & Time *") },
+                    leadingIcon = {
+                        Icon(Icons.Default.CalendarMonth, contentDescription = null, tint = Primary)
+                    },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(14.dp),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Primary,
+                        focusedLabelColor = Primary
+                    )
+                )
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                OutlinedTextField(
+                    value = java.text.SimpleDateFormat("dd MMM yyyy, hh:mm a", java.util.Locale.getDefault())
+                        .format(java.util.Date(uiState.expectedReturnDate)),
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Expected Return Date & Time *") },
+                    leadingIcon = {
+                        Icon(Icons.Default.CalendarMonth, contentDescription = null, tint = Primary)
+                    },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(14.dp),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Primary,
+                        focusedLabelColor = Primary
+                    )
+                )
+            }
+
+            // Guarantor Fields
+            OutlinedTextField(
+                value = uiState.guarantorName,
+                onValueChange = { viewModel.updateGuarantorName(it) },
+                label = { Text("Guarantor Name (Zimmedar)") },
+                leadingIcon = {
+                    Icon(Icons.Default.Person, contentDescription = null, tint = Primary)
+                },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(14.dp),
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Primary,
+                    focusedLabelColor = Primary
+                )
+            )
+
+            OutlinedTextField(
+                value = uiState.guarantorMobile,
+                onValueChange = { viewModel.updateGuarantorMobile(it) },
+                label = { Text("Guarantor Mobile Number") },
+                leadingIcon = {
+                    Icon(Icons.Default.Phone, contentDescription = null, tint = Primary)
+                },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(14.dp),
+                singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Primary,
                     focusedLabelColor = Primary
