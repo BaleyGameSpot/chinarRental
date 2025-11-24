@@ -47,6 +47,10 @@ fun AppNavigation(navController: NavHostController) {
         composable(Screen.Customers.route) {
             CustomersScreen(navController)
         }
+        composable(Screen.CustomerDetail.route) { backStackEntry ->
+            val customerId = backStackEntry.arguments?.getString("customerId")?.toLongOrNull() ?: 0L
+            CustomerDetailScreen(navController, customerId)
+        }
         composable(Screen.NewCustomer.route) {
             NewCustomerScreen(navController)
         }

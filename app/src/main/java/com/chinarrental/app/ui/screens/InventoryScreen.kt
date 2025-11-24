@@ -47,6 +47,9 @@ fun InventoryScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = { viewModel.loadItems() }) {
+                        Icon(Icons.Default.Refresh, "Refresh")
+                    }
                     IconButton(onClick = { showSearchBar = !showSearchBar }) {
                         Icon(Icons.Default.Search, "Search")
                     }
@@ -476,7 +479,7 @@ fun NewItemScreen(
                 onExpandedChange = { expandedCategory = it }
             ) {
                 OutlinedTextField(
-                    value = uiState.category.name,
+                    value = if (uiState.isCustomCategory) "CUSTOM" else uiState.category.name,
                     onValueChange = {},
                     readOnly = true,
                     label = { Text("Category *") },
@@ -506,7 +509,34 @@ fun NewItemScreen(
                             }
                         )
                     }
+                    Divider()
+                    DropdownMenuItem(
+                        text = { Text("CUSTOM") },
+                        leadingIcon = { Icon(Icons.Default.Edit, null) },
+                        onClick = {
+                            viewModel.setCustomCategoryMode(true)
+                            expandedCategory = false
+                        }
+                    )
                 }
+            }
+
+            AnimatedVisibility(visible = uiState.isCustomCategory) {
+                OutlinedTextField(
+                    value = uiState.customCategory,
+                    onValueChange = { viewModel.updateCustomCategory(it) },
+                    label = { Text("Custom Category Name *") },
+                    leadingIcon = { Icon(Icons.Default.Edit, null, tint = Primary) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(14.dp),
+                    singleLine = true,
+                    placeholder = { Text("e.g., STAGE_ITEMS") },
+                    isError = uiState.error?.contains("category", ignoreCase = true) == true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Primary,
+                        focusedLabelColor = Primary
+                    )
+                )
             }
 
             OutlinedTextField(

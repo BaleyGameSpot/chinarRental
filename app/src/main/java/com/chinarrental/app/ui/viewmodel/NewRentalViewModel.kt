@@ -22,6 +22,8 @@ data class NewRentalUiState(
     val startDate: Long = System.currentTimeMillis(),
     val expectedReturnDate: Long = System.currentTimeMillis() + (7 * 24 * 60 * 60 * 1000), // 7 days from now
     val advanceAmount: String = "0",
+    val guarantorName: String = "",
+    val guarantorMobile: String = "",
     val notes: String = "",
     val isSaving: Boolean = false,
     val error: String? = null,
@@ -81,6 +83,14 @@ class NewRentalViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(advanceAmount = amount)
     }
 
+    fun updateGuarantorName(name: String) {
+        _uiState.value = _uiState.value.copy(guarantorName = name)
+    }
+
+    fun updateGuarantorMobile(mobile: String) {
+        _uiState.value = _uiState.value.copy(guarantorMobile = mobile)
+    }
+
     fun updateNotes(notes: String) {
         _uiState.value = _uiState.value.copy(notes = notes)
     }
@@ -128,6 +138,8 @@ class NewRentalViewModel @Inject constructor(
                 expectedReturnDate = state.expectedReturnDate,
                 advanceAmount = advanceAmount,
                 paidAmount = advanceAmount,
+                guarantorName = state.guarantorName,
+                guarantorMobile = state.guarantorMobile,
                 notes = state.notes,
                 status = RentalStatus.ACTIVE
             )

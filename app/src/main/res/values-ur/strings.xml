@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">چنار رینٹل</string>
+
+    <!-- Menu Items -->
+    <string name="menu_dashboard">ڈیش بورڈ</string>
+    <string name="menu_rentals">کرایہ</string>
+    <string name="menu_customers">گاہک</string>
+    <string name="menu_inventory">انوینٹری</string>
+    <string name="menu_payments">ادائیگیاں</string>
+    <string name="menu_roznamcha">روزنامچہ</string>
+    <string name="menu_reminders">یاد دہانیاں</string>
+    <string name="menu_bills">بل</string>
+    <string name="menu_reports">رپورٹس</string>
+    <string name="menu_settings">ترتیبات</string>
+
+    <!-- Common -->
+    <string name="add">شامل کریں</string>
+    <string name="edit">تدوین کریں</string>
+    <string name="delete">حذف کریں</string>
+    <string name="save">محفوظ کریں</string>
+    <string name="cancel">منسوخ کریں</string>
+    <string name="search">تلاش کریں</string>
+    <string name="filter">فلٹر</string>
+    <string name="export">برآمد کریں</string>
+    <string name="backup">بیک اپ</string>
+    <string name="restore">بحال کریں</string>
+    <string name="yes">ہاں</string>
+    <string name="no">نہیں</string>
+    <string name="ok">ٹھیک ہے</string>
+
+    <!-- Customer -->
+    <string name="customer_name">گاہک کا نام</string>
+    <string name="customer_phone">فون نمبر</string>
+    <string name="customer_email">ای میل</string>
+    <string name="customer_address">پتہ</string>
+    <string name="customer_cnic">شناختی کارڈ نمبر</string>
+    <string name="add_customer">گاہک شامل کریں</string>
+    <string name="customer_details">گاہک کی تفصیلات</string>
+
+    <!-- Guarantor -->
+    <string name="guarantor">ضامن / ذمہ دار</string>
+    <string name="guarantor_details">ضامن کی تفصیلات</string>
+    <string name="add_guarantor">ضامن شامل کریں</string>
+    <string name="guarantor_name">ضامن کا نام</string>
+    <string name="guarantor_phone">ضامن کا فون</string>
+    <string name="guarantor_relationship">رشتہ</string>
+
+    <!-- Item -->
+    <string name="item_name">آئٹم کا نام</string>
+    <string name="category">زمرہ</string>
+    <string name="rent_per_day">روزانہ کرایہ</string>
+    <string name="quantity">تعداد</string>
+    <string name="available_quantity">دستیاب تعداد</string>
+    <string name="add_item">آئٹم شامل کریں</string>
+    <string name="item_details">آئٹم کی تفصیلات</string>
+
+    <!-- Rental -->
+    <string name="new_rental">نیا کرایہ</string>
+    <string name="start_date">شروع کی تاریخ</string>
+    <string name="return_date">واپسی کی متوقع تاریخ</string>
+    <string name="actual_return_date">اصل واپسی کی تاریخ</string>
+    <string name="total_rent">کل کرایہ</string>
+    <string name="overdue_rent">تاخیری کرایہ</string>
+    <string name="damage_charges">نقصان کے چارجز</string>
+    <string name="discount">رعایت</string>
+    <string name="final_amount">حتمی رقم</string>
+    <string name="paid_amount">ادا شدہ رقم</string>
+    <string name="remaining_amount">باقی رقم</string>
+    <string name="return_item">آئٹم واپس کریں</string>
+
+    <!-- Payment -->
+    <string name="add_payment">ادائیگی شامل کریں</string>
+    <string name="payment_amount">ادائیگی کی رقم</string>
+    <string name="payment_type">ادائیگی کی قسم</string>
+    <string name="payment_method">ادائیگی کا طریقہ</string>
+    <string name="advance_payment">پیشگی ادائیگی</string>
+
+    <!-- Reminder -->
+    <string name="add_reminder">یاددہانی شامل کریں</string>
+    <string name="reminder_title">یاددہانی کا عنوان</string>
+    <string name="reminder_message">یاددہانی کا پیغام</string>
+    <string name="reminder_time">یاددہانی کا وقت</string>
+    <string name="send_sms">ایس ایم ایس بھیجیں</string>
+    <string name="send_notification">اطلاع بھیجیں</string>
+
+    <!-- Bill -->
+    <string name="generate_bill">بل بنائیں</string>
+    <string name="bill_number">بل نمبر</string>
+    <string name="bill_date">بل کی تاریخ</string>
+    <string name="upload_bill_image">بل کی تصویر اپ لوڈ کریں</string>
+    <string name="export_pdf">پی ڈی ایف برآمد کریں</string>
+
+    <!-- Roznamcha -->
+    <string name="daily_income">روزانہ آمدن</string>
+    <string name="daily_expense">روزانہ خرچ</string>
+    <string name="add_income">آمدن شامل کریں</string>
+    <string name="add_expense">خرچ شامل کریں</string>
+    <string name="total_income">کل آمدن</string>
+    <string name="total_expense">کل خرچ</string>
+    <string name="net_profit">خالص منافع</string>
+
+    <!-- Location -->
+    <string name="save_location">مقام محفوظ کریں</string>
+    <string name="view_on_map">نقشے پر دیکھیں</string>
+    <string name="pickup_location">پک اپ کی جگہ</string>
+
+    <!-- Backup -->
+    <string name="google_drive_backup">گوگل ڈرائیو بیک اپ</string>
+    <string name="auto_backup">خودکار بیک اپ</string>
+    <string name="backup_now">ابھی بیک اپ لیں</string>
+    <string name="last_backup">آخری بیک اپ</string>
+
+    <!-- Status -->
+    <string name="active">فعال</string>
+    <string name="returned">واپس</string>
+    <string name="overdue">تاخیر سے</string>
+    <string name="cancelled">منسوخ</string>
+    <string name="available">دستیاب</string>
+    <string name="rented">کرایہ پر</string>
+
+    <!-- Messages -->
+    <string name="success">کامیاب</string>
+    <string name="error">خرابی</string>
+    <string name="no_data">کوئی ڈیٹا دستیاب نہیں</string>
+    <string name="loading">لوڈ ہو رہا ہے…</string>
+    <string name="delete_confirmation">کیا آپ واقعی اسے حذف کرنا چاہتے ہیں؟</string>
+</resources>
