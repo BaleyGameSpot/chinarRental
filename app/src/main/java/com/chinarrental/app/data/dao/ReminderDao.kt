@@ -31,6 +31,9 @@ interface ReminderDao {
     @Query("SELECT * FROM reminders WHERE customerId = :customerId ORDER BY reminderTime ASC")
     fun getRemindersByCustomer(customerId: Long): Flow<List<Reminder>>
 
+    @Query("SELECT * FROM reminders WHERE referenceId = :rentalId ORDER BY reminderTime ASC")
+    fun getRemindersByRental(rentalId: Long): Flow<List<Reminder>>
+
     @Query("SELECT * FROM reminders WHERE reminderTime <= :currentTime AND isCompleted = 0 AND isSent = 0")
     fun getDueReminders(currentTime: Long = System.currentTimeMillis()): Flow<List<Reminder>>
 

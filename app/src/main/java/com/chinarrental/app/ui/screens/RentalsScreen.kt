@@ -28,6 +28,7 @@ import com.chinarrental.app.ui.navigation.Screen
 import com.chinarrental.app.ui.theme.*
 import com.chinarrental.app.ui.viewmodel.RentalsViewModel
 import com.chinarrental.app.ui.viewmodel.NewRentalViewModel
+import com.chinarrental.app.ui.viewmodel.RentalDetailViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -171,7 +172,10 @@ fun RentalsScreen(
                         RentalCard(
                             rental = rental,
                             onReturn = { viewModel.returnRental(rental.id, System.currentTimeMillis()) },
-                            onDelete = { viewModel.deleteRental(rental) }
+                            onDelete = { viewModel.deleteRental(rental) },
+                            onClick = {
+                                navController.navigate("rental_detail/${rental.id}")
+                            }
                         )
                     }
                 }
@@ -181,7 +185,12 @@ fun RentalsScreen(
 }
 
 @Composable
-fun RentalCard(rental: Rental, onReturn: () -> Unit, onDelete: () -> Unit) {
+fun RentalCard(
+    rental: Rental,
+    onReturn: () -> Unit,
+    onDelete: () -> Unit,
+    onClick: () -> Unit
+) {
     var showReturnDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     val dateFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
@@ -200,7 +209,8 @@ fun RentalCard(rental: Rental, onReturn: () -> Unit, onDelete: () -> Unit) {
         elevation = CardDefaults.cardElevation(4.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color.White
-        )
+        ),
+        onClick = onClick
     ) {
         Box(
             modifier = Modifier
@@ -489,6 +499,12 @@ fun NewRentalScreen(
     val uiState by viewModel.uiState.collectAsState()
     var expandedCustomer by remember { mutableStateOf(false) }
     var expandedItem by remember { mutableStateOf(false) }
+    var showStartDatePicker by remember { mutableStateOf(false) }
+    var showStartTimePicker by remember { mutableStateOf(false) }
+    var showReturnDatePicker by remember { mutableStateOf(false) }
+    var showReturnTimePicker by remember { mutableStateOf(false) }
+    var selectedStartDateMillis by remember { mutableStateOf(uiState.startDate) }
+    var selectedReturnDateMillis by remember { mutableStateOf(uiState.expectedReturnDate) }
 
     LaunchedEffect(uiState.saveSuccess) {
         if (uiState.saveSuccess) {
@@ -682,12 +698,19 @@ fun NewRentalScreen(
             ) {
                 OutlinedTextField(
                     value = java.text.SimpleDateFormat("dd MMM yyyy, hh:mm a", java.util.Locale.getDefault())
-                        .format(java.util.Date(uiState.startDate)),
+                        .format(java.util.Date(selectedStartDateMillis)),
                     onValueChange = {},
                     readOnly = true,
                     label = { Text("Start Date & Time *") },
                     leadingIcon = {
-                        Icon(Icons.Default.CalendarMonth, contentDescription = null, tint = Primary)
+                        IconButton(onClick = { showStartDatePicker = true }) {
+                            Icon(Icons.Default.CalendarMonth, contentDescription = "Select Date", tint = Primary)
+                        }
+                    },
+                    trailingIcon = {
+                        IconButton(onClick = { showStartTimePicker = true }) {
+                            Icon(Icons.Default.Schedule, contentDescription = "Select Time", tint = Primary)
+                        }
                     },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(14.dp),
@@ -705,12 +728,19 @@ fun NewRentalScreen(
             ) {
                 OutlinedTextField(
                     value = java.text.SimpleDateFormat("dd MMM yyyy, hh:mm a", java.util.Locale.getDefault())
-                        .format(java.util.Date(uiState.expectedReturnDate)),
+                        .format(java.util.Date(selectedReturnDateMillis)),
                     onValueChange = {},
                     readOnly = true,
                     label = { Text("Expected Return Date & Time *") },
                     leadingIcon = {
-                        Icon(Icons.Default.CalendarMonth, contentDescription = null, tint = Primary)
+                        IconButton(onClick = { showReturnDatePicker = true }) {
+                            Icon(Icons.Default.CalendarMonth, contentDescription = "Select Date", tint = Primary)
+                        }
+                    },
+                    trailingIcon = {
+                        IconButton(onClick = { showReturnTimePicker = true }) {
+                            Icon(Icons.Default.Schedule, contentDescription = "Select Time", tint = Primary)
+                        }
                     },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(14.dp),
@@ -865,5 +895,659 @@ fun NewRentalScreen(
                 }
             }
         }
+    }
+
+    // Start Date Picker
+    if (showStartDatePicker) {
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = selectedStartDateMillis
+        )
+        DatePickerDialog(
+            onDismissRequest = { showStartDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { millis ->
+                        val calendar = Calendar.getInstance()
+                        calendar.timeInMillis = selectedStartDateMillis
+                        val hour = calendar.get(Calendar.HOUR_OF_DAY)
+                        val minute = calendar.get(Calendar.MINUTE)
+
+                        val newCalendar = Calendar.getInstance()
+                        newCalendar.timeInMillis = millis
+                        newCalendar.set(Calendar.HOUR_OF_DAY, hour)
+                        newCalendar.set(Calendar.MINUTE, minute)
+
+                        selectedStartDateMillis = newCalendar.timeInMillis
+                        viewModel.updateStartDate(newCalendar.timeInMillis)
+                    }
+                    showStartDatePicker = false
+                }) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showStartDatePicker = false }) {
+                    Text("Cancel")
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+
+    // Start Time Picker
+    if (showStartTimePicker) {
+        val calendar = Calendar.getInstance()
+        calendar.timeInMillis = selectedStartDateMillis
+        val timePickerState = rememberTimePickerState(
+            initialHour = calendar.get(Calendar.HOUR_OF_DAY),
+            initialMinute = calendar.get(Calendar.MINUTE),
+            is24Hour = false
+        )
+        AlertDialog(
+            onDismissRequest = { showStartTimePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    val newCalendar = Calendar.getInstance()
+                    newCalendar.timeInMillis = selectedStartDateMillis
+                    newCalendar.set(Calendar.HOUR_OF_DAY, timePickerState.hour)
+                    newCalendar.set(Calendar.MINUTE, timePickerState.minute)
+
+                    selectedStartDateMillis = newCalendar.timeInMillis
+                    viewModel.updateStartDate(newCalendar.timeInMillis)
+                    showStartTimePicker = false
+                }) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showStartTimePicker = false }) {
+                    Text("Cancel")
+                }
+            },
+            text = {
+                TimePicker(state = timePickerState)
+            }
+        )
+    }
+
+    // Return Date Picker
+    if (showReturnDatePicker) {
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = selectedReturnDateMillis
+        )
+        DatePickerDialog(
+            onDismissRequest = { showReturnDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { millis ->
+                        val calendar = Calendar.getInstance()
+                        calendar.timeInMillis = selectedReturnDateMillis
+                        val hour = calendar.get(Calendar.HOUR_OF_DAY)
+                        val minute = calendar.get(Calendar.MINUTE)
+
+                        val newCalendar = Calendar.getInstance()
+                        newCalendar.timeInMillis = millis
+                        newCalendar.set(Calendar.HOUR_OF_DAY, hour)
+                        newCalendar.set(Calendar.MINUTE, minute)
+
+                        selectedReturnDateMillis = newCalendar.timeInMillis
+                        viewModel.updateExpectedReturnDate(newCalendar.timeInMillis)
+                    }
+                    showReturnDatePicker = false
+                }) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showReturnDatePicker = false }) {
+                    Text("Cancel")
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+
+    // Return Time Picker
+    if (showReturnTimePicker) {
+        val calendar = Calendar.getInstance()
+        calendar.timeInMillis = selectedReturnDateMillis
+        val timePickerState = rememberTimePickerState(
+            initialHour = calendar.get(Calendar.HOUR_OF_DAY),
+            initialMinute = calendar.get(Calendar.MINUTE),
+            is24Hour = false
+        )
+        AlertDialog(
+            onDismissRequest = { showReturnTimePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    val newCalendar = Calendar.getInstance()
+                    newCalendar.timeInMillis = selectedReturnDateMillis
+                    newCalendar.set(Calendar.HOUR_OF_DAY, timePickerState.hour)
+                    newCalendar.set(Calendar.MINUTE, timePickerState.minute)
+
+                    selectedReturnDateMillis = newCalendar.timeInMillis
+                    viewModel.updateExpectedReturnDate(newCalendar.timeInMillis)
+                    showReturnTimePicker = false
+                }) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showReturnTimePicker = false }) {
+                    Text("Cancel")
+                }
+            },
+            text = {
+                TimePicker(state = timePickerState)
+            }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun RentalDetailsScreen(
+    navController: NavController,
+    rentalId: Long,
+    viewModel: RentalDetailViewModel = hiltViewModel()
+) {
+    val uiState by viewModel.uiState.collectAsState()
+    val dateFormat = remember { SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault()) }
+    var damageCharges by remember { mutableStateOf("") }
+    var paymentAmount by remember { mutableStateOf("") }
+
+    LaunchedEffect(rentalId) {
+        viewModel.loadRentalDetails(rentalId)
+    }
+
+    LaunchedEffect(uiState.returnSuccess, uiState.paymentSuccess) {
+        if (uiState.returnSuccess || uiState.paymentSuccess) {
+            kotlinx.coroutines.delay(1500)
+            viewModel.resetSuccess()
+            if (uiState.returnSuccess) {
+                navController.navigateUp()
+            }
+        }
+    }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Rental Details") },
+                navigationIcon = {
+                    IconButton(onClick = { navController.navigateUp() }) {
+                        Icon(Icons.Default.ArrowBack, "Back")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Primary,
+                    titleContentColor = Color.White,
+                    navigationIconContentColor = Color.White
+                )
+            )
+        }
+    ) { paddingValues ->
+        if (uiState.isLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = Primary)
+            }
+        } else if (uiState.error != null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(20.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = uiState.error ?: "Error loading rental details",
+                    color = Color.Red,
+                    style = MaterialTheme.typography.bodyLarge
+                )
+            }
+        } else {
+            val rental = uiState.rental
+            val customer = uiState.customer
+            val item = uiState.item
+
+            if (rental != null && customer != null && item != null) {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(BackgroundLight)
+                        .padding(paddingValues)
+                        .padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // Status Badge
+                    item {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = when (rental.status) {
+                                    RentalStatus.ACTIVE -> if (rental.expectedReturnDate < System.currentTimeMillis()) Color(0xFFFF9800) else Color(0xFF4CAF50)
+                                    RentalStatus.RETURNED -> Color(0xFF2196F3)
+                                    RentalStatus.OVERDUE -> Color(0xFFF44336)
+                                    RentalStatus.CANCELLED -> Color(0xFF9E9E9E)
+                                }
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(20.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = "Rental #${rental.id}",
+                                    style = MaterialTheme.typography.headlineSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = rental.status.name,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = Color.White.copy(alpha = 0.9f)
+                                )
+                            }
+                        }
+                    }
+
+                    // Customer Details Card
+                    item {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            shape = RoundedCornerShape(16.dp),
+                            elevation = CardDefaults.cardElevation(2.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(20.dp)
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        Icons.Default.Person,
+                                        contentDescription = null,
+                                        tint = Primary,
+                                        modifier = Modifier.size(28.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Text(
+                                        "Customer Details",
+                                        style = MaterialTheme.typography.titleLarge,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(16.dp))
+                                DetailRow("Name", customer.name)
+                                DetailRow("Mobile", customer.mobile)
+                                DetailRow("CNIC", customer.cnic)
+                                if (customer.address.isNotEmpty()) {
+                                    DetailRow("Address", customer.address)
+                                }
+                            }
+                        }
+                    }
+
+                    // Item Details Card
+                    item {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            shape = RoundedCornerShape(16.dp),
+                            elevation = CardDefaults.cardElevation(2.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(20.dp)
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        Icons.Default.Inventory,
+                                        contentDescription = null,
+                                        tint = Primary,
+                                        modifier = Modifier.size(28.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Text(
+                                        "Item Details",
+                                        style = MaterialTheme.typography.titleLarge,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(16.dp))
+                                DetailRow("Item Name", item.name)
+                                DetailRow("Category", item.category)
+                                DetailRow("Quantity", rental.quantity.toString())
+                            }
+                        }
+                    }
+
+                    // Rental Duration Card
+                    item {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            shape = RoundedCornerShape(16.dp),
+                            elevation = CardDefaults.cardElevation(2.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(20.dp)
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        Icons.Default.Schedule,
+                                        contentDescription = null,
+                                        tint = Primary,
+                                        modifier = Modifier.size(28.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Text(
+                                        "Rental Duration",
+                                        style = MaterialTheme.typography.titleLarge,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(16.dp))
+                                DetailRow("Start Date", dateFormat.format(Date(rental.startDate)))
+                                DetailRow("Expected Return", dateFormat.format(Date(rental.expectedReturnDate)))
+                                if (rental.actualReturnDate != null) {
+                                    DetailRow("Actual Return", dateFormat.format(Date(rental.actualReturnDate)))
+                                }
+                                val days = ((rental.actualReturnDate ?: System.currentTimeMillis()) - rental.startDate) / (1000 * 60 * 60 * 24)
+                                DetailRow("Total Days", days.toString())
+                            }
+                        }
+                    }
+
+                    // Amount Details Card
+                    item {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            shape = RoundedCornerShape(16.dp),
+                            elevation = CardDefaults.cardElevation(2.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(20.dp)
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        Icons.Default.Payments,
+                                        contentDescription = null,
+                                        tint = Primary,
+                                        modifier = Modifier.size(28.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Text(
+                                        "Payment Details",
+                                        style = MaterialTheme.typography.titleLarge,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(16.dp))
+                                DetailRow("Rent Per Day", "PKR ${String.format("%.2f", rental.rentPerDay)}")
+                                DetailRow("Total Rent", "PKR ${String.format("%.2f", rental.totalRent)}")
+                                if (rental.overdueRent > 0) {
+                                    DetailRow("Overdue Charges", "PKR ${String.format("%.2f", rental.overdueRent)}", Color.Red)
+                                }
+                                if (rental.damageCharges > 0) {
+                                    DetailRow("Damage Charges", "PKR ${String.format("%.2f", rental.damageCharges)}", Color.Red)
+                                }
+                                if (rental.discountAmount > 0) {
+                                    DetailRow("Discount", "- PKR ${String.format("%.2f", rental.discountAmount)}", Color(0xFF4CAF50))
+                                }
+                                if (rental.advanceAmount > 0) {
+                                    DetailRow("Advance Paid", "PKR ${String.format("%.2f", rental.advanceAmount)}")
+                                }
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(vertical = 12.dp),
+                                    thickness = 1.dp,
+                                    color = Color.LightGray
+                                )
+                                DetailRow(
+                                    "Final Amount",
+                                    "PKR ${String.format("%.2f", rental.finalAmount)}",
+                                    Primary,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                DetailRow(
+                                    "Paid Amount",
+                                    "PKR ${String.format("%.2f", rental.paidAmount)}",
+                                    Color(0xFF4CAF50)
+                                )
+                                DetailRow(
+                                    "Remaining Amount",
+                                    "PKR ${String.format("%.2f", rental.remainingAmount)}",
+                                    if (rental.remainingAmount > 0) Color.Red else Color(0xFF4CAF50),
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+
+                    // Guarantor Details Card (if available)
+                    if (rental.guarantorName.isNotEmpty()) {
+                        item {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(containerColor = Color.White),
+                                shape = RoundedCornerShape(16.dp),
+                                elevation = CardDefaults.cardElevation(2.dp)
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(20.dp)
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            Icons.Default.SupervisedUserCircle,
+                                            contentDescription = null,
+                                            tint = Primary,
+                                            modifier = Modifier.size(28.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(12.dp))
+                                        Text(
+                                            "Guarantor Details",
+                                            style = MaterialTheme.typography.titleLarge,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    DetailRow("Name", rental.guarantorName)
+                                    if (rental.guarantorMobile.isNotEmpty()) {
+                                        DetailRow("Mobile", rental.guarantorMobile)
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Action Buttons
+                    if (rental.status == RentalStatus.ACTIVE) {
+                        item {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Button(
+                                    onClick = { viewModel.showPaymentDialog() },
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(56.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = Accent),
+                                    shape = RoundedCornerShape(14.dp)
+                                ) {
+                                    Icon(Icons.Default.Payment, contentDescription = null)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Add Payment")
+                                }
+                                Button(
+                                    onClick = { viewModel.showReturnDialog() },
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(56.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = Primary),
+                                    shape = RoundedCornerShape(14.dp)
+                                ) {
+                                    Icon(Icons.Default.AssignmentReturn, contentDescription = null)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Return")
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Return Dialog
+    if (uiState.showReturnDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.hideReturnDialog() },
+            title = { Text("Return Rental") },
+            text = {
+                Column {
+                    Text("Are you sure you want to return this rental?")
+                    Spacer(modifier = Modifier.height(16.dp))
+                    OutlinedTextField(
+                        value = damageCharges,
+                        onValueChange = { damageCharges = it },
+                        label = { Text("Damage Charges (Optional)") },
+                        placeholder = { Text("0.00") },
+                        leadingIcon = {
+                            Text("PKR", modifier = Modifier.padding(start = 12.dp))
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val charges = damageCharges.toDoubleOrNull() ?: 0.0
+                        viewModel.returnRental(charges)
+                    }
+                ) {
+                    Text("Confirm Return")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.hideReturnDialog() }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    // Payment Dialog
+    if (uiState.showPaymentDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.hidePaymentDialog() },
+            title = { Text("Add Payment") },
+            text = {
+                Column {
+                    Text("Enter payment amount:")
+                    Spacer(modifier = Modifier.height(16.dp))
+                    OutlinedTextField(
+                        value = paymentAmount,
+                        onValueChange = { paymentAmount = it },
+                        label = { Text("Amount *") },
+                        placeholder = { Text("0.00") },
+                        leadingIcon = {
+                            Text("PKR", modifier = Modifier.padding(start = 12.dp))
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Remaining: PKR ${String.format("%.2f", uiState.rental?.remainingAmount ?: 0.0)}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Gray
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val amount = paymentAmount.toDoubleOrNull()
+                        if (amount != null && amount > 0) {
+                            viewModel.addPayment(amount)
+                            paymentAmount = ""
+                        }
+                    }
+                ) {
+                    Text("Add Payment")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.hidePaymentDialog() }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    // Success Snackbar
+    if (uiState.returnSuccess) {
+        Snackbar(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Text("Rental returned successfully!")
+        }
+    }
+    if (uiState.paymentSuccess) {
+        Snackbar(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Text("Payment added successfully!")
+        }
+    }
+}
+
+@Composable
+fun DetailRow(
+    label: String,
+    value: String,
+    valueColor: Color = Color.Black,
+    fontWeight: FontWeight = FontWeight.Normal
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.Gray
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            color = valueColor,
+            fontWeight = fontWeight,
+            modifier = Modifier.weight(1f, fill = false),
+            textAlign = androidx.compose.ui.text.style.TextAlign.End
+        )
     }
 }

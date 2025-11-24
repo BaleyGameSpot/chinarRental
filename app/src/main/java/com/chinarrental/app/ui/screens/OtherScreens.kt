@@ -493,11 +493,36 @@ fun RemindersScreen(
     viewModel: RemindersViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var selectedFilter by remember { mutableStateOf("All") }
+    val filters = listOf("All", "Overdue", "Payment Due", "Completed")
+
+    val filteredReminders = when (selectedFilter) {
+        "Overdue" -> uiState.reminders.filter { it.type == ReminderType.OVERDUE && !it.isCompleted }
+        "Payment Due" -> uiState.reminders.filter { it.type == ReminderType.PAYMENT_DUE && !it.isCompleted }
+        "Completed" -> uiState.reminders.filter { it.isCompleted }
+        else -> uiState.reminders
+    }
+
+    val overdueCount = uiState.reminders.count {
+        (it.type == ReminderType.OVERDUE || it.reminderTime < System.currentTimeMillis()) && !it.isCompleted
+    }
+    val paymentDueCount = uiState.reminders.count { it.type == ReminderType.PAYMENT_DUE && !it.isCompleted }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Reminders") },
+                title = {
+                    Column {
+                        Text("Reminders")
+                        if (overdueCount > 0) {
+                            Text(
+                                "$overdueCount Overdue",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.White.copy(alpha = 0.8f)
+                            )
+                        }
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
                         Icon(Icons.Default.ArrowBack, "Back")
@@ -513,9 +538,112 @@ fun RemindersScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .background(BackgroundLight)
                 .padding(paddingValues)
         ) {
-            if (uiState.reminders.isEmpty()) {
+            // Summary Cards
+            if (overdueCount > 0 || paymentDueCount > 0) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    if (overdueCount > 0) {
+                        Card(
+                            modifier = Modifier.weight(1f),
+                            colors = CardDefaults.cardColors(
+                                containerColor = Color(0xFFF44336)
+                            )
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Icon(
+                                    Icons.Default.Warning,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(32.dp)
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    "$overdueCount",
+                                    style = MaterialTheme.typography.headlineMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                                Text(
+                                    "Overdue",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color.White.copy(alpha = 0.9f)
+                                )
+                            }
+                        }
+                    }
+                    if (paymentDueCount > 0) {
+                        Card(
+                            modifier = Modifier.weight(1f),
+                            colors = CardDefaults.cardColors(
+                                containerColor = Color(0xFFFF9800)
+                            )
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Icon(
+                                    Icons.Default.Payment,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(32.dp)
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    "$paymentDueCount",
+                                    style = MaterialTheme.typography.headlineMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                                Text(
+                                    "Payment Due",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color.White.copy(alpha = 0.9f)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Filter Tabs
+            ScrollableTabRow(
+                selectedTabIndex = filters.indexOf(selectedFilter),
+                containerColor = Color.White,
+                edgePadding = 16.dp
+            ) {
+                filters.forEach { filter ->
+                    Tab(
+                        selected = selectedFilter == filter,
+                        onClick = { selectedFilter = filter },
+                        text = {
+                            val count = when (filter) {
+                                "Overdue" -> overdueCount
+                                "Payment Due" -> paymentDueCount
+                                "Completed" -> uiState.reminders.count { it.isCompleted }
+                                else -> uiState.reminders.size
+                            }
+                            Text("$filter ($count)")
+                        }
+                    )
+                }
+            }
+
+            if (filteredReminders.isEmpty()) {
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -528,7 +656,7 @@ fun RemindersScreen(
                             .padding(32.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("No reminders set")
+                        Text("No reminders in this category")
                     }
                 }
             } else {
@@ -537,7 +665,7 @@ fun RemindersScreen(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(uiState.reminders, key = { it.id }) { reminder ->
+                    items(filteredReminders, key = { it.id }) { reminder ->
                         ReminderCard(reminder, viewModel)
                     }
                 }
@@ -549,10 +677,30 @@ fun RemindersScreen(
 @Composable
 fun ReminderCard(reminder: Reminder, viewModel: RemindersViewModel) {
     val dateFormat = SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault())
+    val isOverdue = reminder.reminderTime < System.currentTimeMillis() && !reminder.isCompleted
+
+    val backgroundColor = when {
+        reminder.isCompleted -> Color(0xFFE8F5E9)
+        reminder.type == ReminderType.OVERDUE -> Color(0xFFFFEBEE)
+        reminder.type == ReminderType.PAYMENT_DUE -> Color(0xFFFFF3E0)
+        isOverdue -> Color(0xFFFFEBEE)
+        else -> Color.White
+    }
+
+    val borderColor = when {
+        reminder.type == ReminderType.OVERDUE -> Color(0xFFF44336)
+        reminder.type == ReminderType.PAYMENT_DUE -> Color(0xFFFF9800)
+        isOverdue -> Color(0xFFF44336)
+        else -> Color.Transparent
+    }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(2.dp)
+        elevation = CardDefaults.cardElevation(2.dp),
+        colors = CardDefaults.cardColors(containerColor = backgroundColor),
+        border = if (borderColor != Color.Transparent) {
+            androidx.compose.foundation.BorderStroke(2.dp, borderColor)
+        } else null
     ) {
         Row(
             modifier = Modifier
@@ -562,25 +710,50 @@ fun ReminderCard(reminder: Reminder, viewModel: RemindersViewModel) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = reminder.title,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    if (reminder.type == ReminderType.OVERDUE) {
+                        Icon(
+                            Icons.Default.Warning,
+                            contentDescription = null,
+                            tint = Color(0xFFF44336),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    } else if (reminder.type == ReminderType.PAYMENT_DUE) {
+                        Icon(
+                            Icons.Default.Payment,
+                            contentDescription = null,
+                            tint = Color(0xFFFF9800),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    Text(
+                        text = reminder.title,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = reminder.message,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = Color.DarkGray
                 )
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = dateFormat.format(Date(reminder.reminderTime)),
-                    style = MaterialTheme.typography.bodySmall
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (isOverdue) Color(0xFFF44336) else Color.Gray
                 )
             }
             if (!reminder.isCompleted) {
                 IconButton(onClick = { viewModel.markAsCompleted(reminder) }) {
                     Icon(Icons.Default.Check, "Mark Complete", tint = MaterialTheme.colorScheme.primary)
                 }
+            } else {
+                Icon(Icons.Default.CheckCircle, "Completed", tint = Color(0xFF4CAF50))
             }
         }
     }
@@ -688,7 +861,21 @@ fun BillCard(bill: Bill) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ReportsScreen(navController: NavController) {
+fun ReportsScreen(
+    navController: NavController,
+    dashboardViewModel: DashboardViewModel = hiltViewModel(),
+    rentalsViewModel: RentalsViewModel = hiltViewModel()
+) {
+    val dashboardState by dashboardViewModel.uiState.collectAsState()
+    val rentalsState by rentalsViewModel.uiState.collectAsState()
+    var selectedPeriod by remember { mutableStateOf("Monthly") }
+    val periods = listOf("Daily", "Weekly", "Monthly", "Yearly")
+
+    LaunchedEffect(Unit) {
+        dashboardViewModel.loadDashboardData()
+        rentalsViewModel.loadRentals()
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -705,32 +892,350 @@ fun ReportsScreen(navController: NavController) {
             )
         }
     ) { paddingValues ->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
+                .background(BackgroundLight)
                 .padding(paddingValues)
-                .padding(16.dp)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(
-                "Reports & Analytics with Charts",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(2.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(32.dp),
-                    contentAlignment = Alignment.Center
+            // Period Selector
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = Color.White)
                 ) {
-                    Text("Coming Soon: Revenue charts, rental trends, customer analytics")
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        periods.forEach { period ->
+                            FilterChip(
+                                selected = selectedPeriod == period,
+                                onClick = { selectedPeriod = period },
+                                label = { Text(period) },
+                                leadingIcon = if (selectedPeriod == period) {
+                                    { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
+                                } else null
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Revenue Overview
+            item {
+                Text(
+                    "Financial Overview",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    ReportCard(
+                        title = "Total Revenue",
+                        value = "PKR ${String.format("%.2f", dashboardState.totalIncome)}",
+                        icon = Icons.Default.TrendingUp,
+                        backgroundColor = Color(0xFF4CAF50),
+                        modifier = Modifier.weight(1f)
+                    )
+                    ReportCard(
+                        title = "Expenses",
+                        value = "PKR ${String.format("%.2f", dashboardState.totalExpense)}",
+                        icon = Icons.Default.TrendingDown,
+                        backgroundColor = Color(0xFFF44336),
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+
+            item {
+                ReportCard(
+                    title = "Net Profit",
+                    value = "PKR ${String.format("%.2f", dashboardState.balance)}",
+                    icon = Icons.Default.AccountBalance,
+                    backgroundColor = Primary,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
+            // Rental Statistics
+            item {
+                Text(
+                    "Rental Statistics",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    ReportCard(
+                        title = "Active Rentals",
+                        value = "${dashboardState.activeRentals}",
+                        icon = Icons.Default.ShoppingCart,
+                        backgroundColor = Color(0xFF2196F3),
+                        modifier = Modifier.weight(1f)
+                    )
+                    ReportCard(
+                        title = "Overdue",
+                        value = "${dashboardState.overdueRentals}",
+                        icon = Icons.Default.Warning,
+                        backgroundColor = Color(0xFFFF9800),
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+
+            // Customer & Item Stats
+            item {
+                Text(
+                    "Business Metrics",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    ReportCard(
+                        title = "Total Customers",
+                        value = "${dashboardState.totalCustomers}",
+                        icon = Icons.Default.People,
+                        backgroundColor = Color(0xFF9C27B0),
+                        modifier = Modifier.weight(1f)
+                    )
+                    ReportCard(
+                        title = "Total Items",
+                        value = "${dashboardState.totalItems}",
+                        icon = Icons.Default.Inventory,
+                        backgroundColor = Color(0xFF00BCD4),
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+
+            // Payment Statistics
+            item {
+                Text(
+                    "Payment Analytics",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(4.dp)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                "Today's Collection",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = Color.Gray
+                            )
+                            Text(
+                                "PKR ${String.format("%.2f", dashboardState.todayIncome)}",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF4CAF50)
+                            )
+                        }
+                        HorizontalDivider()
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                "Pending Payments",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = Color.Gray
+                            )
+                            Text(
+                                "${dashboardState.pendingPayments}",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFFFF9800)
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Rental Status Distribution
+            item {
+                Text(
+                    "Rental Status Breakdown",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            item {
+                val activeCount = rentalsState.rentals.count { it.status == RentalStatus.ACTIVE }
+                val returnedCount = rentalsState.rentals.count { it.status == RentalStatus.RETURNED }
+                val overdueCount = rentalsState.rentals.count { it.status == RentalStatus.OVERDUE }
+                val cancelledCount = rentalsState.rentals.count { it.status == RentalStatus.CANCELLED }
+                val total = rentalsState.rentals.size.toFloat().coerceAtLeast(1f)
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(4.dp)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        StatusBar("Active", activeCount, total, Color(0xFF4CAF50))
+                        StatusBar("Returned", returnedCount, total, Color(0xFF2196F3))
+                        StatusBar("Overdue", overdueCount, total, Color(0xFFF44336))
+                        StatusBar("Cancelled", cancelledCount, total, Color(0xFF9E9E9E))
+                    }
+                }
+            }
+
+            // Export Options
+            item {
+                Text(
+                    "Export Reports",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = { /* Export to PDF */ },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(Icons.Default.PictureAsPdf, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Export PDF")
+                    }
+                    OutlinedButton(
+                        onClick = { /* Export to Excel */ },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(Icons.Default.TableChart, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Export Excel")
+                    }
                 }
             }
         }
+    }
+}
+
+@Composable
+fun ReportCard(
+    title: String,
+    value: String,
+    icon: ImageVector,
+    backgroundColor: Color,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(containerColor = backgroundColor),
+        elevation = CardDefaults.cardElevation(4.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                icon,
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(32.dp)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                value,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+            Text(
+                title,
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.White.copy(alpha = 0.9f),
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            )
+        }
+    }
+}
+
+@Composable
+fun StatusBar(
+    label: String,
+    count: Int,
+    total: Float,
+    color: Color
+) {
+    val percentage = (count / total * 100).toInt()
+
+    Column {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                label,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium
+            )
+            Text(
+                "$count ($percentage%)",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = color
+            )
+        }
+        Spacer(modifier = Modifier.height(4.dp))
+        LinearProgressIndicator(
+            progress = count / total,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(8.dp)
+                .clip(RoundedCornerShape(4.dp)),
+            color = color,
+            trackColor = color.copy(alpha = 0.2f)
+        )
     }
 }
 

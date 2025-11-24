@@ -15,6 +15,8 @@ import androidx.core.content.ContextCompat
 import androidx.navigation.compose.rememberNavController
 import com.chinarrental.app.ui.navigation.AppNavigation
 import com.chinarrental.app.ui.theme.ChinarRentalTheme
+import com.chinarrental.app.util.LocaleManager
+import android.content.Context
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -24,6 +26,10 @@ class MainActivity : ComponentActivity() {
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         // Handle permission results
+    }
+
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(LocaleManager.applyLocale(newBase))
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
