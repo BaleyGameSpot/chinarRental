@@ -3,6 +3,7 @@ package com.chinarrental.app.ui.screens
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -823,13 +824,13 @@ fun CustomerDetailScreen(
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
 
-                        if (customer.discountPercentage > 0) {
+                        if (customer.discountValue > 0) {
                             Surface(
                                 shape = RoundedCornerShape(20.dp),
                                 color = MaterialTheme.colorScheme.secondary
                             ) {
                                 Text(
-                                    text = "${customer.discountPercentage}% Discount",
+                                    text = "${customer.discountValue}% Discount",
                                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                                     style = MaterialTheme.typography.labelMedium,
                                     fontWeight = FontWeight.Bold,
@@ -915,11 +916,11 @@ fun CustomerDetailScreen(
                                 .format(java.util.Date(customer.createdAt))
                         )
 
-                        if (customer.discountPercentage > 0) {
+                        if (customer.discountValue > 0) {
                             DetailRow(
                                 icon = Icons.Default.LocalOffer,
                                 label = "Discount",
-                                value = "${customer.discountPercentage}%"
+                                value = "${customer.discountValue}%"
                             )
                         }
                     }
