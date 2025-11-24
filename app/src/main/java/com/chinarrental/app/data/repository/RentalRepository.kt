@@ -14,7 +14,8 @@ class RentalRepository @Inject constructor(
     private val itemDao: ItemDao,
     private val customerDao: CustomerDao,
     private val paymentDao: PaymentDao,
-    private val reminderDao: ReminderDao
+    private val reminderDao: ReminderDao,
+    private val billDao: BillDao
 ) {
 
     fun getAllRentals(): Flow<List<Rental>> = rentalDao.getAllRentals()
@@ -67,6 +68,26 @@ class RentalRepository @Inject constructor(
                 sendSms = true
             )
             reminderDao.insertReminder(reminder)
+
+            // Generate bill for the rental
+            val billNumber = "BILL-${System.currentTimeMillis()}"
+            val bill = Bill(
+                customerId = rental.customerId,
+                rentalId = rentalId,
+                billNumber = billNumber,
+                billDate = System.currentTimeMillis(),
+                amount = calculatedRental.finalAmount,
+                paidAmount = calculatedRental.paidAmount,
+                status = if (calculatedRental.paidAmount >= calculatedRental.finalAmount) {
+                    BillStatus.PAID
+                } else if (calculatedRental.paidAmount > 0) {
+                    BillStatus.PARTIALLY_PAID
+                } else {
+                    BillStatus.UNPAID
+                },
+                notes = "Rental bill for item: ${item.name}"
+            )
+            billDao.insertBill(bill)
 
             Result.success(rentalId)
         } catch (e: Exception) {

@@ -26,6 +26,9 @@ import androidx.navigation.NavController
 import com.chinarrental.app.ui.navigation.Screen
 import com.chinarrental.app.ui.theme.*
 import com.chinarrental.app.ui.viewmodel.DashboardViewModel
+import com.chinarrental.app.util.LocaleManager
+import android.app.Activity
+import androidx.compose.ui.platform.LocalContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,12 +37,19 @@ fun DashboardScreen(
     viewModel: DashboardViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+    val activity = context as? Activity
+    var showLanguageDialog by remember { mutableStateOf(false) }
+    val currentLanguage = remember { mutableStateOf(LocaleManager.getLocale(context)) }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Chinar Rental - Dashboard") },
                 actions = {
+                    IconButton(onClick = { showLanguageDialog = true }) {
+                        Icon(Icons.Default.Language, "Change Language")
+                    }
                     IconButton(onClick = { viewModel.refresh() }) {
                         Icon(Icons.Default.Refresh, "Refresh")
                     }
@@ -285,6 +295,79 @@ fun DashboardScreen(
                 }
             }
         }
+    }
+
+    // Language Selection Dialog
+    if (showLanguageDialog) {
+        AlertDialog(
+            onDismissRequest = { showLanguageDialog = false },
+            title = {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(Icons.Default.Language, contentDescription = null, tint = Primary)
+                    Text("Select Language")
+                }
+            },
+            text = {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    LocaleManager.Language.values().forEach { language ->
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    LocaleManager.setLocale(context, language)
+                                    currentLanguage.value = language
+                                    showLanguageDialog = false
+                                    activity?.recreate()
+                                },
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (currentLanguage.value == language) {
+                                    Primary.copy(alpha = 0.1f)
+                                } else {
+                                    MaterialTheme.colorScheme.surface
+                                }
+                            ),
+                            border = if (currentLanguage.value == language) {
+                                androidx.compose.foundation.BorderStroke(2.dp, Primary)
+                            } else {
+                                null
+                            }
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = language.displayName,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = if (currentLanguage.value == language) Primary else Color.Black
+                                )
+                                if (currentLanguage.value == language) {
+                                    Icon(
+                                        Icons.Default.CheckCircle,
+                                        contentDescription = "Selected",
+                                        tint = Primary
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showLanguageDialog = false }) {
+                    Text("Close")
+                }
+            }
+        )
     }
 }
 

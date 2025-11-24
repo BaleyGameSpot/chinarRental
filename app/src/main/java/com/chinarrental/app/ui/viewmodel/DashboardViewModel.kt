@@ -8,6 +8,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -45,62 +46,29 @@ class DashboardViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             try {
-                // Load all dashboard metrics in parallel
-                launch {
-                    rentalRepository.getRentalsByStatus(RentalStatus.ACTIVE).collect { rentals ->
-                        _uiState.value = _uiState.value.copy(activeRentals = rentals.size)
-                    }
-                }
+                // Load all dashboard metrics using first() to get a snapshot
+                val activeRentals = rentalRepository.getRentalsByStatus(RentalStatus.ACTIVE).first()
+                val totalCustomers = customerRepository.getTotalCustomersCount().first()
+                val totalItems = itemRepository.getTotalItemsCount().first()
+                val todayIncome = paymentRepository.getTodayTotalAmount().first() ?: 0.0
+                val totalIncome = transactionRepository.getTotalIncome().first() ?: 0.0
+                val totalExpense = transactionRepository.getTotalExpense().first() ?: 0.0
+                val balance = transactionRepository.getBalance().first() ?: 0.0
+                val overdueRentals = rentalRepository.getOverdueRentals().first()
+                val pendingPayments = rentalRepository.getRentalsWithPendingPayment().first()
 
-                launch {
-                    customerRepository.getTotalCustomersCount().collect { count ->
-                        _uiState.value = _uiState.value.copy(totalCustomers = count)
-                    }
-                }
-
-                launch {
-                    itemRepository.getTotalItemsCount().collect { count ->
-                        _uiState.value = _uiState.value.copy(totalItems = count)
-                    }
-                }
-
-                launch {
-                    paymentRepository.getTodayTotalAmount().collect { amount ->
-                        _uiState.value = _uiState.value.copy(todayIncome = amount ?: 0.0)
-                    }
-                }
-
-                launch {
-                    transactionRepository.getTotalIncome().collect { income ->
-                        _uiState.value = _uiState.value.copy(totalIncome = income ?: 0.0)
-                    }
-                }
-
-                launch {
-                    transactionRepository.getTotalExpense().collect { expense ->
-                        _uiState.value = _uiState.value.copy(totalExpense = expense ?: 0.0)
-                    }
-                }
-
-                launch {
-                    transactionRepository.getBalance().collect { balance ->
-                        _uiState.value = _uiState.value.copy(balance = balance ?: 0.0)
-                    }
-                }
-
-                launch {
-                    rentalRepository.getOverdueRentals().collect { rentals ->
-                        _uiState.value = _uiState.value.copy(overdueRentals = rentals.size)
-                    }
-                }
-
-                launch {
-                    rentalRepository.getRentalsWithPendingPayment().collect { rentals ->
-                        _uiState.value = _uiState.value.copy(pendingPayments = rentals.size)
-                    }
-                }
-
-                _uiState.value = _uiState.value.copy(isLoading = false)
+                _uiState.value = _uiState.value.copy(
+                    activeRentals = activeRentals.size,
+                    totalCustomers = totalCustomers,
+                    totalItems = totalItems,
+                    todayIncome = todayIncome,
+                    totalIncome = totalIncome,
+                    totalExpense = totalExpense,
+                    balance = balance,
+                    overdueRentals = overdueRentals.size,
+                    pendingPayments = pendingPayments.size,
+                    isLoading = false
+                )
 
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(

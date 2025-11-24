@@ -41,6 +41,10 @@ fun AppNavigation(navController: NavHostController) {
         composable(Screen.Rentals.route) {
             RentalsScreen(navController)
         }
+        composable(Screen.RentalDetail.route) { backStackEntry ->
+            val rentalId = backStackEntry.arguments?.getString("rentalId")?.toLongOrNull() ?: 0L
+            RentalDetailsScreen(navController, rentalId)
+        }
         composable(Screen.NewRental.route) {
             NewRentalScreen(navController)
         }
