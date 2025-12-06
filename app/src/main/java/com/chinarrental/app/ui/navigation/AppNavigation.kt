@@ -8,6 +8,7 @@ import com.chinarrental.app.ui.screens.*
 
 sealed class Screen(val route: String) {
     object Splash : Screen("splash")
+    object Warning : Screen("warning")
     object Dashboard : Screen("dashboard")
     object Rentals : Screen("rentals")
     object RentalDetail : Screen("rental_detail/{rentalId}")
@@ -34,6 +35,9 @@ fun AppNavigation(navController: NavHostController) {
     ) {
         composable(Screen.Splash.route) {
             SplashScreen(navController)
+        }
+        composable(Screen.Warning.route) {
+            WarningScreen()
         }
         composable(Screen.Dashboard.route) {
             DashboardScreen(navController)
