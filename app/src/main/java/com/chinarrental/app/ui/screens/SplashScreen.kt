@@ -49,7 +49,7 @@ fun SplashScreen(navController: NavController) {
     LaunchedEffect(key1 = true) {
         startAnimation = true
         delay(2500)
-        navController.navigate(Screen.Dashboard.route) {
+        navController.navigate(Screen.Warning.route) {
             popUpTo(Screen.Splash.route) {
                 inclusive = true
             }
